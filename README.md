@@ -1,4 +1,4 @@
-# QuizApp v2.2
+# QuizApp v2.3
 
 A desktop quiz application built with **Python** and **Tkinter** that lets you create and run practice tests directly from PowerPoint (`.pptx`) decks. The app extracts questions, options, and answers from slide notes and provides an interactive exam interface with timers, navigation, and review features.
 
@@ -17,6 +17,7 @@ A desktop quiz application built with **Python** and **Tkinter** that lets you c
 9. Allow for repeat questions. (can set number high than max with repeat questions)
 10. Show Reason/explanation for answer
 11. Uses powerpoint slide show to build question bank for quiz. (Powerpoint doesn't have to be in same location as script)
+12. Test mode, (disables checking answers and showing reasons during test)
 
 
 Usage: 

@@ -12,12 +12,11 @@ A desktop quiz application built with **Python** and **Tkinter** that lets you c
 4. One 15 minute break (similar to GIAC style tests) # will be disabled if you don't time the test.
 5. Calculator integrated into app.
 6. Check answers
-7. See current score
-8. Pick number of questions, all, or random amount
-9. Set timer. (Choose 0 if you don't want to be timed)
-10. Allow for repeat questions. (can set number high than max with repeat questions)
-11. Show Reason/explanation for answer
-12. Uses powerpoint slide show to build question bank for quiz. (Powerpoint doesn't have to be in same location as script)
+7. Pick number of questions, all, or random amount
+8. Set timer. (Choose 0 if you don't want to be timed)
+9. Allow for repeat questions. (can set number high than max with repeat questions)
+10. Show Reason/explanation for answer
+11. Uses powerpoint slide show to build question bank for quiz. (Powerpoint doesn't have to be in same location as script)
 
 
 Usage: 

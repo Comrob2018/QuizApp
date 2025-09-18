@@ -30,7 +30,9 @@ Usage:
 <img width="203" height="286" alt="image" src="https://github.com/user-attachments/assets/4e7e301a-68db-42ec-8255-74121edcc15b" />
 
 --After you choose the questions and timer you start the test by clicking ok. 
+
 Multi-Select Question:
+
 <img width="643" height="413" alt="image" src="https://github.com/user-attachments/assets/47492bee-6828-457b-8edc-15b5597d7176" />
 
 Multiple Choice Question:

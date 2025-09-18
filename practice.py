@@ -504,11 +504,7 @@ class QuizApp:
         # Button for calculator
         self.open_calc = tk.Button(self.sidebar_frame, text="Calc.", command=self.calculator, width=10)
         self.open_calc.pack(anchor='n', pady=3)
-       
-        # Create a show score button
-        self.show_score_button = tk.Button(self.sidebar_frame, text="Score", command=self.show_score, width=10)
-        self.show_score_button.pack(anchor='n', pady=3)
-        
+             
         # One-time break button
         self.break_button = tk.Button(self.sidebar_frame, text="Take Break",command=self.start_break, width=10)
         self.break_button.pack(anchor='n', pady=3)
@@ -560,6 +556,9 @@ class QuizApp:
         if self.time_left > 0:  # Start timer only if input is greater than zero
             self.running = True
             self.update_timer()
+        else:
+            self.break_button.config(state=tk.DISABLED)
+
         
         # dynamic resize of window
         self.root.bind("<Configure>", self._on_resize)
@@ -824,9 +823,6 @@ class QuizApp:
         self.pause_end_epoch = time.time() + 15 * 60  # 15 minutes
         self.set_interaction_enabled(False)
         self.break_button.config(text="Break (in progress)", state=tk.DISABLED)
-        # Optional: show a banner
-        self.question_label.config(text=f"⏸ Break in progress (15 minutes). Timer is paused.\n"
-                                        f"You can click 'Resume Now' to return early.")
 
     def resume_after_break(self):
         if not self.pause_active:
@@ -876,33 +872,16 @@ class QuizApp:
 
 
     def next_question(self):
-        current_question = self.new_quiz_data[self.question_index]
-
-        if self.is_multi_current:
-            selected_list = [opt for opt, var in self.checkbox_vars if var.get()]
-            if set(selected_list) == self.correct_set_current:
-                self.score += 1
-            else:
-                self.incorrect_questions.append({
-                    "question": current_question["question"],
-                    "correct_answer": "\n".join(self.correct_set_current) if self.correct_set_current else current_question.get("answer", "See notes"),
-                    "reason": current_question.get("reason", "No explanation provided.")
-                })
-        else:
-            if self.selected_answer.get() in current_question["answer"] or current_question["answer"] in self.selected_answer.get():
-                self.score += 1
-            else:
-                self.incorrect_questions.append({
-                    "question": current_question["question"],
-                    "correct_answer": current_question["answer"],
-                    "reason": current_question.get("reason", "No explanation provided.")
-                })
-        # Move to the next question or finish the quiz
-        self.question_index += 1
-        if self.question_index < len(self.new_quiz_data):
+        if self.question_index < len(self.new_quiz_data) - 1:
+            self.question_index += 1
             self.load_question()
         else:
-            self.show_result()
+            CustomPopup(
+                self.root,
+                "End of Quiz",
+                "You're already on the last question!",
+                '300x100'
+            )
 
 
     def previous_question(self):
@@ -1005,11 +984,6 @@ class QuizApp:
         tk.Button(win, text="Go", command=_go_to_selected, width=8).pack(pady=6)
 
 
-    def show_score(self):
-        # This button will show the current number of correct answers
-        CustomPopup(self.root, "Current Score:", f"You have answered {self.score} questions correctly!", '300x100')
-   
-
     def finish_quiz(self):
         total_questions = len(self.new_quiz_data)
         submitted_qs = set(self.saved_answers.keys())
@@ -1028,7 +1002,7 @@ class QuizApp:
             )
             return
         
-         # ✅ GRADE NOW using saved_answers
+        # ✅ GRADE NOW using saved_answers
         self.score = 0
         self.incorrect_questions = []
 

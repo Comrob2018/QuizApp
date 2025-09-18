@@ -32,11 +32,11 @@ Usage:
 
 Multi-Select Question:
 
-<img width="643" height="413" alt="image" src="https://github.com/user-attachments/assets/47492bee-6828-457b-8edc-15b5597d7176" />
+<img width="645" height="386" alt="image" src="https://github.com/user-attachments/assets/f1fa7a4f-d625-4f8e-9502-ccca36a45d85" />
 
 Multiple Choice Question:
 
-<img width="644" height="408" alt="image" src="https://github.com/user-attachments/assets/2085a0fb-71b6-4748-8af7-d948425b3f20" />
+<img width="648" height="378" alt="image" src="https://github.com/user-attachments/assets/b754d856-00d2-4145-bae4-0a82013ff312" />
 
 
 -- After you have finished the test you click finish.

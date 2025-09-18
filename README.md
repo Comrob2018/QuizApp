@@ -31,10 +31,11 @@ Usage:
 
 --After you choose the questions and timer you start the test by clicking ok. 
 Multi-Select Question:
-<img width="1087" height="386" alt="image" src="https://github.com/user-attachments/assets/387ea719-db3b-4081-89d5-0d1f732574b6" />
+<img width="643" height="413" alt="image" src="https://github.com/user-attachments/assets/47492bee-6828-457b-8edc-15b5597d7176" />
 
 Multiple Choice Question:
-<img width="1089" height="382" alt="image" src="https://github.com/user-attachments/assets/793f6ca0-f126-4c25-9854-9347ba7026f1" />
+<img width="644" height="408" alt="image" src="https://github.com/user-attachments/assets/2085a0fb-71b6-4748-8af7-d948425b3f20" />
+
 
 -- After you have finished the test you click finish.
 Results Screen

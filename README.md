@@ -1,4 +1,4 @@
-# QuizApp v2.1
+# QuizApp v2.2
 
 A desktop quiz application built with **Python** and **Tkinter** that lets you create and run practice tests directly from PowerPoint (`.pptx`) decks. The app extracts questions, options, and answers from slide notes and provides an interactive exam interface with timers, navigation, and review features.
 
@@ -9,7 +9,7 @@ A desktop quiz application built with **Python** and **Tkinter** that lets you c
 1. Multiple Choice/Multi Select style questions
 2. Images(will copy them from the slide show and include them.) you can click on the image to zoom in
 3. Flag questions
-4. One 15 minute break (similar to GIAC style tests)
+4. One 15 minute break (similar to GIAC style tests) # will be disabled if you don't time the test.
 5. Calculator integrated into app.
 6. Check answers
 7. See current score

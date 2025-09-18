@@ -27,9 +27,13 @@ A desktop quiz application built with **Python** and **Tkinter** that lets you c
 
 Usage: 
 -- bash/powershell:
+
 -- python practice.py
+
 -- Then pick the file:
-<img width="944" height="535" alt="image" src="https://github.com/user-attachments/assets/e4389c46-1ce8-487b-af16-44f58a8a906a" />
+
+<img width="607" height="432" alt="image" src="https://github.com/user-attachments/assets/e9558026-19c8-4005-99bd-dd1b3337a9de" />
+
 
 -- Once you pick the file you will pick the number of questions and the amount of time you would like the test to take.
 <img width="203" height="286" alt="image" src="https://github.com/user-attachments/assets/4e7e301a-68db-42ec-8255-74121edcc15b" />

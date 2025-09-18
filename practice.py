@@ -40,7 +40,10 @@ def extract_images_and_prepare_quiz(pptx_file):
             if slide.has_notes_slide:
                 notes_slide = slide.notes_slide
                 notes_text = notes_slide.notes_text_frame.text
-                answer = notes_text.split("is:")[1].split("\n")[0]
+                try:
+                    answer = notes_text.split("is:")[1].split("\n")[0]
+                except IndexError:
+                    answer = "unknown answer"
                 try:
                     reason = notes_text.split("\n")[1]
                 except IndexError:
@@ -152,7 +155,7 @@ def open_image_popup(image_path, scale_factor=2):
     image_label.pack(padx=5, pady=5)
 
     # Optionally, you can set a fixed size or let the window adjust to the image size
-    popup.geometry(f"{(img_width * scale_factor) + 20}x{(img_height * scale_factor) + 20}")
+    popup.geometry(f"{(img_width * scale_factor)}x{(img_height * scale_factor)}")
 
 # Custom class to get the number of questions for the quiz
 class QuestionPopup:
@@ -451,10 +454,23 @@ class QuizApp:
         random.shuffle(selected_questions)
        
         # use the number of questions to set the length
-        self.new_quiz_data = selected_questions[0:self.num_questions]    
+        self.new_quiz_data = selected_questions[0:self.num_questions]  
+        
+        for q in self.new_quiz_data:
+            options = q["options"].split("\n")
+            random.shuffle(options)
+            q["shuffled_options"] = options  # 💾 store the shuffled version
 
-        # Create a frame for the question number, timer and question
-        self.question_frame = tk.Frame(root, bg="gray")
+        # Full window frame
+        self.main_row_frame = tk.Frame(root, bg="gray")
+        self.main_row_frame.pack(side="top", fill="both", expand=True)
+
+        # Frame for question, answers, and tool buttons
+        self.main_content_frame = tk.Frame(self.main_row_frame, bg="gray")
+        self.main_content_frame.pack(side="left", fill="both", expand=True)
+
+        # Create a frame for the question number and question
+        self.question_frame = tk.Frame(self.main_content_frame, bg="gray")
         self.question_frame.pack(pady=2)
 
         # Label for question count
@@ -462,81 +478,111 @@ class QuizApp:
         self.question_count_label.pack(pady=5,anchor='nw')
 
         # Question label
-        self.question_label = tk.Label(self.question_frame, text="", font=("Arial", 18, "bold"), fg='black', bg='gray')
+        self.question_label = tk.Label(self.question_frame, text="", font=("Arial", 18, "bold"), fg='black', bg='gray',
+                                       justify="left", anchor="w")
         self.question_label.pack(pady=(10,5), anchor="w")
 
         # Create an image frame for any images
-        self.image_frame = tk.Frame(root, bg="gray")
+        self.image_frame = tk.Frame(self.main_content_frame, bg="gray")
         self.image_frame.pack(pady=2, anchor="center")
 
         # Create radio button container for options
-        self.radio_button_frame = tk.Frame(root, bg='gray')
+        self.radio_button_frame = tk.Frame(self.main_content_frame, bg='gray')
         self.radio_button_frame.pack(pady=5, padx=(2,10), anchor='w')
 
         # StringVar for holding the selected answer
         self.selected_answer = tk.StringVar()
 
-        # Create a button container for the other buttons
-        self.button_frame = tk.Frame(root, bg='gray')
-        self.button_frame.pack(pady=5)
-
-        # Previous button to move to the previous question
-        self.previous_button = tk.Button(self.button_frame, text="Prev.", command=self.previous_question, width=self.button_width)
-        self.previous_button.pack(side="left", padx=1, pady=2)
-
-        # Next button to move to the next question
-        self.next_button = tk.Button(self.button_frame, text="Next", command=self.next_question, width=self.button_width)
-        self.next_button.pack(side="left", padx=1, pady=2)
+        # --- Vertical Tool Buttons on the Right ---
+        self.sidebar_frame = tk.Frame(self.main_row_frame, bg='gray')
+        self.sidebar_frame.pack(side="right", fill="y", padx=10)
         
-        # Toggle flag for review
-        self.flag_button = tk.Button(self.button_frame, text="Flag", command=self.toggle_flag, width=self.button_width)
-        self.flag_button.pack(side="left", padx=1, pady=2)
-
-        # Jump to next flagged question
-        self.next_flagged_button = tk.Button(self.button_frame, text="Next Flagged", command=self.go_to_next_flagged, width=10)
-        self.next_flagged_button.pack(side="left", padx=1, pady=2)
-
         # Button to show the reason for the correct answer
-        self.reason_button = tk.Button(self.button_frame, text="Reason", command=self.show_reason, width=self.button_width)
-        self.reason_button.pack(side="left", padx=1, pady=2)
+        self.reason_button = tk.Button(self.sidebar_frame, text="Reason", command=self.show_reason, width=10)
+        self.reason_button.pack(anchor='n', pady=(23,3))
 
         # Button for calculator
-        self.open_calc = tk.Button(self.button_frame, text="Calc.", command=self.calculator, width=self.button_width)
-        self.open_calc.pack(side="left", padx=1, pady=2)
+        self.open_calc = tk.Button(self.sidebar_frame, text="Calc.", command=self.calculator, width=10)
+        self.open_calc.pack(anchor='n', pady=3)
        
         # Create a show score button
-        self.show_score_button = tk.Button(self.button_frame, text="Score", command=self.show_score, width=self.button_width)
-        self.show_score_button.pack(side="left", padx=1, pady=2)
+        self.show_score_button = tk.Button(self.sidebar_frame, text="Score", command=self.show_score, width=10)
+        self.show_score_button.pack(anchor='n', pady=3)
         
         # One-time break button
-        self.break_button = tk.Button(self.button_frame, text="Take Break",command=self.start_break, width=10)
-        self.break_button.pack(side="left", padx=1, pady=2)
+        self.break_button = tk.Button(self.sidebar_frame, text="Take Break",command=self.start_break, width=10)
+        self.break_button.pack(anchor='n', pady=3)
 
         # Only shown (or enabled) during a pause
-        self.resume_button = tk.Button(self.button_frame, text="End Break", command=self.resume_after_break, state=tk.DISABLED, width=10)
-        self.resume_button.pack(side="left", padx=1, pady=2)
-        # Button to check the answer
-        self.check_button = tk.Button(self.button_frame, text="Check", command=self.check_answer, width=self.button_width)
-        self.check_button.pack(side="left", padx=1, pady=2)
+        self.resume_button = tk.Button(self.sidebar_frame, text="End Break", command=self.resume_after_break, state=tk.DISABLED, width=10)
+        self.resume_button.pack(anchor='n', pady=3)     
        
         # Button to Finish and score the quiz
-        self.finish_button = tk.Button(self.button_frame, text="Finish", command=self.finish_quiz, width=self.button_width)
-        self.finish_button.pack(side="left", padx=1, pady=2)
+        self.finish_button = tk.Button(self.sidebar_frame, text="Finish", command=self.finish_quiz, width=10)
+        self.finish_button.pack(anchor='n', pady=3)
 
         # Close button to close the window
-        self.close_button = tk.Button(self.button_frame, text="Close", command=self.root.destroy, width=self.button_width)
-        self.close_button.pack(side="left", padx=1, pady=2)
+        self.close_button = tk.Button(self.sidebar_frame, text="Close", command=self.root.destroy, width=10)
+        self.close_button.pack(anchor='n', pady=3)
        
+        # --- Navigation/Submit/Check Buttons at Bottom ---
+        self.bottom_button_frame = tk.Frame(root, bg='gray')
+        self.bottom_button_frame.pack(side="bottom", pady=5)
+
+        # Previous button to move to the previous question
+        self.previous_button = tk.Button(self.bottom_button_frame, text="Prev.", command=self.previous_question, width=self.button_width)
+        self.previous_button.pack(side="left", anchor='center',padx=3)
+
+        # Next button to move to the next question
+        self.next_button = tk.Button(self.bottom_button_frame, text="Next", command=self.next_question, width=self.button_width)
+        self.next_button.pack(side="left", anchor='center',padx=3)
+        
+        # Toggle flag for review
+        self.flag_button = tk.Button(self.bottom_button_frame, text="Flag", command=self.toggle_flag, width=self.button_width)
+        self.flag_button.pack(side="left", anchor='center',padx=3)
+
+        # Jump to next flagged question
+        self.next_flagged_button = tk.Button(self.bottom_button_frame, text="Next Flagged", command=self.go_to_next_flagged, width=10)
+        self.next_flagged_button.pack(side="left", anchor='center',padx=3)
+
+        # Submit button to save answer
+        self.submit_button = tk.Button(self.bottom_button_frame, text="Submit", command=self.submit_answer, width=self.button_width)
+        self.submit_button.pack(side="left", anchor='center',padx=3)
+
+        # Button to check the answer
+        self.check_button = tk.Button(self.bottom_button_frame, text="Check", command=self.check_answer, width=self.button_width)
+        self.check_button.pack(side="left", anchor='center',padx=3)
+        
         # Timer label
-        self.timer_label = tk.Label(self.button_frame, font=("Arial", 20), text="", fg="black", bg='gray')
-        self.timer_label.pack(side="left", padx=15, pady=2)
+        self.timer_label = tk.Label(self.bottom_button_frame, font=("Arial", 20), text="", fg="black", bg='gray')
+        self.timer_label.pack(side="left", anchor='center')
 
         if self.time_left > 0:  # Start timer only if input is greater than zero
             self.running = True
             self.update_timer()
+        
+        # dynamic resize of window
+        self.root.bind("<Configure>", self._on_resize)
 
         # Load the first question
         self.load_question()
+
+    def _on_resize(self, event):
+        try:
+            # Actual width of the window
+            window_width = self.root.winfo_width()
+
+            # Sidebar's width (fixed or dynamic)
+            sidebar_width = self.sidebar_frame.winfo_width()
+
+            # Calculate available width for wrapping question text
+            available_width = max(window_width - sidebar_width - 40, 300)
+
+            # Update wraplength
+            self.question_label.config(wraplength=available_width)
+        except:
+            # In case frame hasn't rendered yet
+            pass
 
     # Function to display images in tkinter
     def show_images(self, image_paths):
@@ -563,11 +609,10 @@ class QuizApp:
 
         current_question = self.new_quiz_data[self.question_index]
 
-        # Wrap the question text
-        wrapped_question = textwrap.fill(current_question["question"], width=90)
-        self.question_label.config(text=wrapped_question)
+        # --- Set the question text ---
+        self.question_label.config(text=current_question["question"])
 
-        # Display any associated images
+        # --- Display images (if any) ---
         if "image_paths" in current_question and current_question["image_paths"]:
             show_images(self, current_question["image_paths"])
         else:
@@ -575,71 +620,119 @@ class QuizApp:
             default_label = tk.Label(self.image_frame, bg='gray')
             default_label.pack()
 
-        # Reset option area
+        # --- Clear old options ---
         for widget in self.radio_button_frame.winfo_children():
             widget.destroy()
-        self.selected_answer.set(None)
+
+        self.selected_answer.set("")  # clear radio selection
         self.checkbox_vars = []
         self.is_multi_current = False
         self.correct_set_current = set()
 
-        # Prepare options (existing behavior)
-        options = current_question["options"].split("\n")
-        random.shuffle(options)
+        # --- Prepare and shuffle options ---
+        options = current_question.get("shuffled_options", [])
 
-        # Detect whether this is multi-answer by parsing the notes 'answer'
+
+        # --- Determine correct answer(s) ---
         correct_set = _parse_correct_set(current_question.get("answer", ""), options)
         self.correct_set_current = correct_set
         self.is_multi_current = len(correct_set) > 1
 
+        # --- Load saved answer, if any ---
+        saved = self.saved_answers.get(self.question_index)
+        saved_selection = ""
+        if saved:
+            if saved["mode"] == "single":
+                saved_selection = saved.get("selected", "")
+            elif saved["mode"] == "multi":
+                saved_multi = set(saved.get("selected", []))
+
+        # --- Render options ---
         if self.is_multi_current:
-            # Show a hint
+            # MULTI-answer question (checkboxes)
             hint = tk.Label(self.radio_button_frame, text="(Select all that apply)", font=("Arial", 12, "bold"),
                             fg="black", bg="gray")
             hint.pack(anchor='w', pady=(0, 6))
 
-            # Render checkboxes
             for opt in options:
                 var = tk.BooleanVar(value=False)
-                wrapped_option = textwrap.fill(opt, width=90)
-                cb = tk.Checkbutton(self.radio_button_frame, text=wrapped_option, variable=var,command=self._persist_multi_selection,
-                                    font=("Arial", 16, "bold"), fg='black', bg='gray', onvalue=True, offvalue=False)
+                cb = tk.Checkbutton(self.radio_button_frame,
+                                    text=textwrap.fill(opt, width=90),
+                                    variable=var,
+                                    font=("Arial", 16, "bold"),
+                                    fg='black', bg='gray',
+                                    onvalue=True, offvalue=False)
                 cb.pack(anchor='w')
                 self.checkbox_vars.append((opt, var))
-        else:
-            # Single-answer (existing radio behavior)
-            for opt in options:
-                wrapped_option = textwrap.fill(opt, width=90)
-                rb = tk.Radiobutton(self.radio_button_frame, text=wrapped_option, variable=self.selected_answer, command=self._on_single_change,
-                                    value=opt, font=("Arial", 16, "bold"), fg='black', bg='gray')
-                rb.pack(anchor='w')
-        saved = self.saved_answers.get(self.question_index)
-        if saved:
-            if saved["mode"] == "single":
-                self.selected_answer.set(saved.get("selected", ""))
-            elif saved["mode"] == "multi":
-                selset = set(saved.get("selected", []))
-                for opt, var in self.checkbox_vars:
-                    var.set(opt in selset)
-                # Reset buttons
-                self.check_button.config(state=tk.NORMAL)
 
-        # Enable/Disable the Previous and Next buttons
+            # Set previously submitted multi-selection (after buttons exist)
+            if saved and saved.get("mode") == "multi":
+                for opt, var in self.checkbox_vars:
+                    var.set(opt in saved_multi)
+
+        else:
+            # SINGLE-answer question (radio buttons)
+            for opt in options:
+                rb = tk.Radiobutton(self.radio_button_frame,
+                                    text=textwrap.fill(opt, width=90),
+                                    variable=self.selected_answer,
+                                    value=opt,
+                                    font=("Arial", 16, "bold"),
+                                    fg='black', bg='gray',
+                                    anchor="w", justify="left")
+                rb.pack(anchor='w')
+
+            # Set the selected radio AFTER the buttons exist
+            if saved and saved.get("mode") == "single":
+                self.selected_answer.set(saved_selection)
+
+        # --- Enable/disable nav buttons ---
         self.previous_button.config(state=tk.NORMAL if self.question_index > 0 else tk.DISABLED)
         self.next_button.config(state=tk.NORMAL if self.question_index < len(self.new_quiz_data) - 1 else tk.DISABLED)
-        self.selected_answer.set(None)
 
-         # --- Flag indicator on the question counter (step 3) ---
-        if self.question_index in self.flagged_questions:
-            self.flag_button.config(text="Unflag")
-            self.question_count_label.config(
-                text=f"⚑ Question {self.question_index + 1} of {len(self.new_quiz_data)}"
-            )
+        # --- Update flag and status label ---
+        idx = self.question_index
+        flagged = idx in self.flagged_questions
+        submitted = idx in self.saved_answers
+
+        label_text = ""
+        if flagged:
+            label_text += "⚑ "
+        if not submitted:
+            label_text += "⚠️ Unsubmitted - "
+
+        label_text += f"Question {idx + 1} of {len(self.new_quiz_data)}"
+        self.question_count_label.config(text=label_text)
+        self.flag_button.config(text="Unflag" if flagged else "Flag")
+
+    
+    def submit_answer(self):
+        """Save the user's answer (single or multi) for grading later."""
+        if self.is_multi_current:
+            selected_list = [opt for opt, var in self.checkbox_vars if var.get()]
+            if not selected_list:
+                CustomPopup(self.root, "No Selection", "Please select at least one option before submitting.", '260x120')
+                return
+            self.saved_answers[self.question_index] = {
+                "mode": "multi",
+                "selected": selected_list
+            }
         else:
-            self.flag_button.config(text="Flag")
-            self.question_count_label.config(
-                text=f"Question {self.question_index + 1} of {len(self.new_quiz_data)}"
-            )
+            selected = self.selected_answer.get()
+            if not selected:
+                CustomPopup(self.root, "No Selection", "Please select an option before submitting.", '260x120')
+                return
+            self.saved_answers[self.question_index] = {
+                "mode": "single",
+                "selected": selected
+            }
+
+        # Optional: Visual confirmation
+        CustomPopup(self.root, "Submitted", "Your answer was saved!", '200x100')
+        
+        # Refresh the question label to remove "⚠️ Unsubmitted"
+        self.load_question()
+
 
     def _on_single_change(self):
         """Persist single-answer selection immediately."""
@@ -918,7 +1011,55 @@ class QuizApp:
    
 
     def finish_quiz(self):
-        """Display the final result with the score."""
+        total_questions = len(self.new_quiz_data)
+        submitted_qs = set(self.saved_answers.keys())
+        missing_qs = set(range(total_questions)) - submitted_qs
+
+        if missing_qs:
+            for idx in missing_qs:
+                self.flagged_questions.add(idx)
+
+            CustomPopup(
+                self.root,
+                "Unanswered Questions",
+                f"You must submit all answers before finishing.\n"
+                f"{len(missing_qs)} question(s) still need answers.",
+                '400x150'
+            )
+            return
+        
+         # ✅ GRADE NOW using saved_answers
+        self.score = 0
+        self.incorrect_questions = []
+
+        for idx, saved in self.saved_answers.items():
+            question_data = self.new_quiz_data[idx]
+            options = question_data["options"].split("\n")
+            correct_set = _parse_correct_set(question_data.get("answer", ""), options)
+
+            if saved["mode"] == "single":
+                selected = saved["selected"]
+                if selected in correct_set or any(opt.lower() == selected.lower() for opt in correct_set):
+                    self.score += 1
+                else:
+                    self.incorrect_questions.append({
+                        "question": question_data["question"],
+                        "correct_answer": "\n".join(correct_set),
+                        "reason": question_data.get("reason", "No explanation provided.")
+                    })
+
+            elif saved["mode"] == "multi":
+                selected_set = set(saved["selected"])
+                if selected_set == correct_set:
+                    self.score += 1
+                else:
+                    self.incorrect_questions.append({
+                        "question": question_data["question"],
+                        "correct_answer": "\n".join(correct_set),
+                        "reason": question_data.get("reason", "No explanation provided.")
+                    })
+
+        # show final result
         self.root.geometry("500x150")
         # Clear the window by removing existing widgets
         for widget in self.root.pack_slaves():
@@ -951,7 +1092,6 @@ class QuizApp:
         # Create an Exit button to close the quiz
         exit_button = tk.Button(button_frame, text="Close", command=self.root.quit, font=("Arial", 18), width=self.button_width)
         exit_button.pack(side="left",padx=5,pady=5)
-
 
     def update_timer(self):
         # If no timer was set (e.g., 0 or None), just don't run the loop.

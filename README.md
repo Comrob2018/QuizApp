@@ -22,10 +22,12 @@ A desktop quiz application built with **Python** and **Tkinter** that lets you c
       --the mode is highlighted in the corner of the screen:
     
 <img width="118" height="30" alt="image" src="https://github.com/user-attachments/assets/177427ad-ef45-439b-9652-ac6a818f343c" />
-<img width="156" height="39" alt="image" src="https://github.com/user-attachments/assets/aacbec33-247b-4b58-ad26-c0da2acc1230" />
+
+<img width="118" height="30" alt="image" src="https://github.com/user-attachments/assets/aacbec33-247b-4b58-ad26-c0da2acc1230" />
 
 
 Usage: 
+
 -- bash/powershell:
 
 -- python practice.py

@@ -17,7 +17,12 @@ A desktop quiz application built with **Python** and **Tkinter** that lets you c
 9. Allow for repeat questions. (can set number high than max with repeat questions)
 10. Show Reason/explanation for answer
 11. Uses powerpoint slide show to build question bank for quiz. (Powerpoint doesn't have to be in same location as script)
-12. Test mode, (disables checking answers and showing reasons during test)
+12. Test mode,
+      --disables checking answers and showing reasons during test
+      --the mode is highlighted in the corner of the screen:
+    
+<img width="118" height="30" alt="image" src="https://github.com/user-attachments/assets/177427ad-ef45-439b-9652-ac6a818f343c" />
+<img width="156" height="39" alt="image" src="https://github.com/user-attachments/assets/aacbec33-247b-4b58-ad26-c0da2acc1230" />
 
 
 Usage: 

@@ -39,6 +39,14 @@ Multiple Choice Question:
 
 <img width="648" height="378" alt="image" src="https://github.com/user-attachments/assets/b754d856-00d2-4145-bae4-0a82013ff312" />
 
+Practice mode:
+
+<img width="736" height="585" alt="image" src="https://github.com/user-attachments/assets/85f4a8a0-d25c-42ae-ad92-4610f268b06f" />
+
+
+Test mode:
+
+<img width="803" height="599" alt="image" src="https://github.com/user-attachments/assets/08fe49de-5020-4b90-89e1-05d909e71873" />
 
 -- After you have finished the test you click finish.
 Results Screen

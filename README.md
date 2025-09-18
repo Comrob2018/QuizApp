@@ -30,7 +30,7 @@ Usage:
 
 -- bash/powershell:
 
--- python practice.py
+python practice.py
 
 -- Then pick the file:
 
@@ -38,6 +38,7 @@ Usage:
 
 
 -- Once you pick the file you will pick the number of questions and the amount of time you would like the test to take.
+
 <img width="203" height="286" alt="image" src="https://github.com/user-attachments/assets/4e7e301a-68db-42ec-8255-74121edcc15b" />
 
 --After you choose the questions and timer you start the test by clicking ok. 
@@ -46,9 +47,11 @@ Multi-Select Question:
 
 <img width="645" height="386" alt="image" src="https://github.com/user-attachments/assets/f1fa7a4f-d625-4f8e-9502-ccca36a45d85" />
 
+
 Multiple Choice Question:
 
 <img width="648" height="378" alt="image" src="https://github.com/user-attachments/assets/b754d856-00d2-4145-bae4-0a82013ff312" />
+
 
 Practice mode:
 

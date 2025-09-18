@@ -45,12 +45,13 @@ python practice.py
 
 Multi-Select Question:
 
-<img width="645" height="386" alt="image" src="https://github.com/user-attachments/assets/f1fa7a4f-d625-4f8e-9502-ccca36a45d85" />
+<img width="680" height="457" alt="image" src="https://github.com/user-attachments/assets/e21f16b5-1a27-407f-8166-76f5f09bc1eb" />
 
 
 Multiple Choice Question:
 
-<img width="648" height="378" alt="image" src="https://github.com/user-attachments/assets/b754d856-00d2-4145-bae4-0a82013ff312" />
+<img width="677" height="457" alt="image" src="https://github.com/user-attachments/assets/c6f5e263-f80f-438d-bdd1-c6e1a61bdd65" />
+
 
 
 Practice mode:

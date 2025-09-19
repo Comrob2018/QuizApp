@@ -6,6 +6,6 @@ V 2.1
 V 2.2
 - updated break button logic so that it won't break the test if there is no timer.
 
-V 2.3
+V 3.0
 - Added Test mode. This disables the check button and reason button during the test
 - When test mode is selected, the app will go into "Dark" mode. (dark background, light text)

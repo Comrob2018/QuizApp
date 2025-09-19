@@ -39,7 +39,8 @@ python practice.py
 
 -- Once you pick the file you will pick the number of questions and the amount of time you would like the test to take.
 
-<img width="203" height="286" alt="image" src="https://github.com/user-attachments/assets/4e7e301a-68db-42ec-8255-74121edcc15b" />
+<img width="204" height="316" alt="image" src="https://github.com/user-attachments/assets/3a1a4b73-cf16-47ac-81f1-e5974dd20073" />
+
 
 --After you choose the questions and timer you start the test by clicking ok. 
 

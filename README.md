@@ -42,7 +42,7 @@ python practice.py
 <img width="204" height="316" alt="image" src="https://github.com/user-attachments/assets/3a1a4b73-cf16-47ac-81f1-e5974dd20073" />
 
 
---After you choose the questions and timer you start the test by clicking ok. 
+--After you choose the questions, timer length and the other options you start the test by clicking ok. 
 
 Multi-Select Question:
 

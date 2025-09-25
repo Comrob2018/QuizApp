@@ -1,3 +1,18 @@
+V 4.3
+- Changed Picture functionality.
+- Added thumbnails and changed show image button functionality.
+
+V 4.2
+- Re-added answer randomization
+- Added the ✅/❌ for the review and ✓/✗ export markers.
+
+V 4.1
+- changed practice mode and test mode functionality
+- badge at top changes to blue(practice) or red(test)
+
+V 4.0
+- Updated code base to PyQT library
+
 V 3.0
 - Added Test mode. This disables the check button and reason button during the test
 - When test mode is selected, the app will go into "Dark" mode. (dark background, light text)

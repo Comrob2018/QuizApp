@@ -792,8 +792,23 @@ class QuizMainWindow(QMainWindow):
         idx = self.current_index
         if idx in self.flags:
             self.flags.remove(idx)
+            self.flag_btn.setStyleSheet(
+                "QPushButton {"
+                " background-color: #b00020; color: white;"
+                " padding: 6px 12px; border-radius: 6px;"
+                " font-weight: 600;"
+                "}"
+                "QPushButton:hover { background-color: #d32f2f; }"
+            )
         else:
             self.flags.add(idx)
+            self.flag_btn.setStyleSheet(
+                "QPushButton {"
+                " background-color: #e0e0e0; color: #000;"
+                " padding: 6px 12px; border-radius: 6px;"
+                "}"
+                "QPushButton:hover { background-color: #d5d5d5; }"
+            )
         self._render_current_question()  # to update header indicator
 
     def _open_flag_list(self):
@@ -891,6 +906,17 @@ class QuizMainWindow(QMainWindow):
                 for b in self.answer_group.buttons():
                     if b.property("optionText") == prev:
                         b.setChecked(True); break
+        # Keep flag button style in sync with current question
+        if self.current_index in self.flags:
+            self.flag_btn.setStyleSheet(
+                "QPushButton { background-color: #b00020; color: white; padding: 6px 12px; border-radius: 6px; font-weight: 600; }"
+                "QPushButton:hover { background-color: #d32f2f; }"
+            )
+        else:
+            self.flag_btn.setStyleSheet(
+                "QPushButton { background-color: #e0e0e0; color: #000; padding: 6px 12px; border-radius: 6px; }"
+                "QPushButton:hover { background-color: #d5d5d5; }"
+            )
 
         self.answers_scroll.verticalScrollBar().setValue(0)
         self._update_action_buttons_state()

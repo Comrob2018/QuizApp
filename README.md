@@ -110,7 +110,7 @@ pyinstaller --onefile --windowed --icon=ask.png .\practiceqt.py
 <img width="609" height="442" alt="image" src="https://github.com/user-attachments/assets/4138d9ce-58a7-4745-88a4-003329e018bf" />
 
 
-- Quiz Settings:
+- Quiz Settings: (Will pull max number of questions from number of slides in the presentation)
 
 
 <img width="514" height="277" alt="image" src="https://github.com/user-attachments/assets/56cd86c1-0dd3-4822-b0d5-d99b1a4a54fd" />

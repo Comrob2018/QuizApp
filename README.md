@@ -124,7 +124,7 @@ python practiceqt.py
 <img width="972" height="694" alt="image" src="https://github.com/user-attachments/assets/d89c2c68-aa33-4213-b9c9-ff3921dc3210" />
 
 
-- Question with picture (blue "Show Image" button and a thumbnail beneath the question text)
+- Question with picture (blue "Show Image" button and a thumbnail beneath the question text when image is present, click either to enlarge the picture)
 
 
 <img width="650" height="662" alt="image" src="https://github.com/user-attachments/assets/f5fb5750-4db1-4654-9330-ac2cb19e5578" />

@@ -70,7 +70,7 @@ README.md        # This file
 
 ### Run
 ```bash
-python quiz_pyqt6.py
+python practiceqt.py
 ```
 
 ### Starting a Quiz

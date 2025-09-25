@@ -16,8 +16,8 @@ A feature-rich quiz application built with **Python 3.13** and **PyQt6**, design
 - **Images**
   - Slide images automatically imported.
   - Always-visible **Show Image** button (colorized when image is available).
-  - Click or press **`I`** to view image in a zoomable window.
-  - 📷 emoji shown in question text when an image exists.
+  - Click **Show Image** or Thumbnail to view image in a zoomable window.
+  - Thumbnail is shown below question text when an image exists.
 
 - **Modes**
   - **Practice Mode**: Check answers immediately, see reasons.

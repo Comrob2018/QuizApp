@@ -44,7 +44,6 @@ A feature-rich quiz application built with **Python 3.13** and **PyQt6**, design
     - Each question with correct answer, your answer, and explanation.
     - ✅ besides questions with correct answers.
     - ❌ besides questions with incorrect answers.
-    - [FLAGGED] marker if flagged during the test.
   - Export review as plain text (`.txt`) with ✓/✗ markers per question.
   - Restart option that reopens the settings dialog.
 

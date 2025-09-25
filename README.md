@@ -1,4 +1,4 @@
-# QuizApp v4.2
+# QuizApp v4.3
 
 A feature-rich quiz application built with **Python 3.13** and **PyQt6**, designed to run practice or test-style quizzes using PowerPoint slide decks (`.pptx`) as the question bank.
 
@@ -124,10 +124,10 @@ python practiceqt.py
 <img width="972" height="694" alt="image" src="https://github.com/user-attachments/assets/d89c2c68-aa33-4213-b9c9-ff3921dc3210" />
 
 
-- Question with picture (blue "Show Image" button and camera icon besides question text)
+- Question with picture (blue "Show Image" button and a thumbnail beneath the question text)
 
 
-<img width="622" height="668" alt="image" src="https://github.com/user-attachments/assets/c30ddc25-0dcd-4a83-9e3a-2284413147f8" />
+<img width="650" height="662" alt="image" src="https://github.com/user-attachments/assets/f5fb5750-4db1-4654-9330-ac2cb19e5578" />
 
 
 - Review screen with ✓ / ✗ 

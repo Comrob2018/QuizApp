@@ -12,6 +12,7 @@ V 4.1
 
 V 4.0
 - Updated code base to PyQT library
+- Changed Reason button to Why?
 
 V 3.0
 - Added Test mode. This disables the check button and reason button during the test

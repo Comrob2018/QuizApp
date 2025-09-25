@@ -77,6 +77,11 @@ python practiceqt.py
 2. Configure quiz settings (mode, timer, question count, repeats, etc.).
 3. Begin quiz.
 
+### Create a standalone app
+```bash\windows\macOS
+pyinstaller --onefile --windowed --icon=ask.png .\practiceqt.py
+```
+
 ---
 
 ## 📝 Creating Questions in PowerPoint

@@ -42,8 +42,8 @@ A feature-rich quiz application built with **Python 3.13** and **PyQt6**, design
   - Shows:
     - Score as **X/Y (Z%)** at the top.
     - Each question with correct answer, your answer, and explanation.
-    - ✅ Correct answers highlighted in green.
-    - ❌ Incorrect answers highlighted in red.
+    - ✅ besides questions with correct answers.
+    - ❌ besides questions with incorrect answers.
     - [FLAGGED] marker if flagged during the test.
   - Export review as plain text (`.txt`) with ✓/✗ markers per question.
   - Restart option that reopens the settings dialog.
@@ -130,7 +130,14 @@ python practiceqt.py
 <img width="650" height="662" alt="image" src="https://github.com/user-attachments/assets/f5fb5750-4db1-4654-9330-ac2cb19e5578" />
 
 
-- Review screen with ✓ / ✗ 
+- Review Screen  (✅ Correct answers,  ❌ Incorrect answers)
+
+
+<img width="556" height="219" alt="image" src="https://github.com/user-attachments/assets/550834f3-e57c-4445-be90-e6cb551a7720" />
+
+
+
+- Exported review with ✓ / ✗ next to questions.
 
 
 <img width="1900" height="327" alt="image" src="https://github.com/user-attachments/assets/8d067d18-ced5-49ae-8c3d-f43be1566251" />

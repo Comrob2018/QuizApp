@@ -52,7 +52,7 @@ A feature-rich quiz application built with **Python 3.13** and **PyQt6**, design
 ## 📂 Project Structure
 
 ```
-practiceqt.py    # Main application
+practice.py    # Main application
 README.md        # This file
 ```
 
@@ -69,7 +69,7 @@ README.md        # This file
 
 ### Run
 ```bash
-python practiceqt.py
+python practice.py
 ```
 
 ### Starting a Quiz
@@ -79,7 +79,7 @@ python practiceqt.py
 
 ### Create a standalone app
 ```bash\windows\macOS
-pyinstaller --onefile --windowed --icon=ask.png .\practiceqt.py
+pyinstaller --onefile --windowed --icon=ask.png .\practice.py
 ```
 
 ---

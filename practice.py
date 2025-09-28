@@ -4,7 +4,7 @@
 PyQt6 Quiz App 
 Capabilities:
 - Multiple Choice + Multi-Select questions
-- Images pulled from PPTX; click "Show Image" to zoom
+- Images pulled from PPTX; click "Show Image" or image thumbnail to open image
 - Flag questions (toggle flag, jump to flagged list)
 - One 15-minute break (enabled only if timer > 0)
 - Calculator integrated
@@ -15,6 +15,7 @@ Capabilities:
 - Show Reason/Explanation (disabled in Test Mode)
 - Build question bank from PowerPoint slides (notes-driven answers)
 - Test Mode: disables Check/Reason during the run
+- Submit button indicates answer submission instead of popup for saved answer.
 """
 from __future__ import annotations
 
@@ -22,8 +23,113 @@ import os
 import re
 import sys
 import random
+import subprocess
 from dataclasses import dataclass
 from typing import List, Dict, Set, Tuple, Optional, Callable
+
+#---------------------------------
+#  Checking for required libraries
+#---------------------------------
+
+try:
+    from importlib.metadata import version, PackageNotFoundError  # Python 3.8+
+except Exception:  # pragma: no cover (older Pythons)
+    from importlib_metadata import version, PackageNotFoundError  # type: ignore
+
+
+def _parse_version(v: str) -> tuple:
+    """Lightweight version tuple (major, minor, patch) for comparisons."""
+    parts = v.split(".")
+    nums = []
+    for p in parts[:3]:
+        try:
+            nums.append(int("".join(ch for ch in p if ch.isdigit())))
+        except ValueError:
+            nums.append(0)
+    while len(nums) < 3:
+        nums.append(0)
+    return tuple(nums)
+
+
+def _get_installed_version(dist_name: str) -> Optional[str]:
+    """Return installed distribution version (or None if not installed)."""
+    try:
+        return version(dist_name)
+    except PackageNotFoundError:
+        return None
+
+
+def _needs(dist_name: str, min_ver_str: str) -> bool:
+    """Return True if dist_name is missing or below min_ver_str."""
+    v = _get_installed_version(dist_name)
+    if v is None:
+        return True
+    return _parse_version(v) < _parse_version(min_ver_str)
+
+
+def _ask_yes_no(prompt: str, default_no: bool = True) -> bool:
+    """Return True if user answers yes. If not interactive, return False when default_no."""
+    if not sys.stdin or not sys.stdin.isatty():
+        return not default_no
+    try:
+        ans = input(prompt).strip().lower()
+    except EOFError:
+        return not default_no
+    return ans in ("y", "yes")
+
+
+def _pip_install(args: List[str]) -> None:
+    """Run pip install/upgrade with provided args (list of 'pkg>=x.y')."""
+    cmd = [sys.executable, "-m", "pip", "install", "--upgrade", *args]
+    subprocess.check_call(cmd)
+
+
+def ensure_requirements() -> None:
+    """
+    Ensure required packages (PyQt6, python-pptx) are present at minimum versions.
+    Prompts once (if interactive). Installs/updates both in one pip call when needed.
+    Exits with a helpful message if requirements remain unsatisfied.
+    """
+    requirements = [
+        ("PyQt6",       "6.5.0"),   # adjust if you need a newer baseline
+        ("python-pptx", "0.6.21"),
+    ]
+
+    to_install = [f"{name}>={minver}" for (name, minver) in requirements if _needs(name, minver)]
+
+    if not to_install:
+        # Optional: print once for verbose mode
+        # print("✅ All dependencies satisfied.")
+        return
+
+    # One prompt for all missing/outdated packages
+    msg_lines = [
+        "The following packages are missing or below the required version:",
+        *[f"  - {spec}" for spec in to_install],
+        "",
+    ]
+    print("\n".join(msg_lines))
+
+    if _ask_yes_no("Install/upgrade them now? (y/n): ", default_no=True):
+        try:
+            print("Installing/upgrading: " + ", ".join(to_install))
+            _pip_install(to_install)
+        except subprocess.CalledProcessError as e:
+            print(f"❌ Installation failed: {e}")
+            sys.exit(1)
+    else:
+        print("❌ Required packages not installed. You can install them with:")
+        print(f"   {sys.executable} -m pip install --upgrade " + " ".join(to_install))
+        sys.exit(1)
+
+    # Re-verify after pip run
+    still_missing = [f"{n}>={v}" for (n, v) in requirements if _needs(n, v)]
+    if still_missing:
+        print("❌ Some requirements are still unsatisfied after installation:")
+        for spec in still_missing:
+            print("  -", spec)
+        sys.exit(1)
+    # print("✅ Dependencies are now satisfied.")
 
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QPushButton, QRadioButton,
@@ -152,6 +258,7 @@ def _read_notes_answer_and_reason(slide) -> Tuple[Set[str], str]:
     tokens = [t.strip() for t in _CORRECT_SEP_RE.split(answer_str) if t.strip()]
     return set(tokens), reason
 
+
 def _map_correct_tokens_to_options(tokens: Set[str], options: List[str]) -> Set[str]:
     """Exact-match-first; fallback to substring; supports letter mapping."""
     if not tokens:
@@ -176,6 +283,7 @@ def _map_correct_tokens_to_options(tokens: Set[str], options: List[str]) -> Set[
         if sub:
             mapped.add(sub)
     return mapped
+
 
 def extract_images_and_prepare_quiz(pptx_path: str, out_dir: Optional[str] = None) -> List[Dict]:
     prs = Presentation(pptx_path)
@@ -225,7 +333,6 @@ def extract_images_and_prepare_quiz(pptx_path: str, out_dir: Optional[str] = Non
 def build_quiz_from_pptx(pptx_path: str) -> Tuple[List[Dict], str]:
     data = extract_images_and_prepare_quiz(pptx_path)
     return data, pptx_path
-
 
 # -----------------------------
 # Dialogs: Image viewer, Calculator, Review, Settings
@@ -383,7 +490,7 @@ class ReviewPopup(QDialog):
             is_incorrect = chosen.strip() and (chosen != correct)
 
             text = (
-                f"{i}. {'[FLAGGED] ' if flagged else ''}{q}\n"
+                f"{i}. {q}\n"
                 f"correct answer: {correct}\n"
                 f"your answer: {chosen}\n"
                 f"explanation: {reason}\n"
@@ -455,7 +562,7 @@ class ReviewPopup(QDialog):
                     marker = "✗" if is_incorrect else "✓"
 
                     f.write(
-                        f"{marker} {i}. {'[FLAGGED] ' if flagged else ''}{q}\n"
+                        f"{marker} {i}. {q}\n"
                         f"correct answer: {correct}\n"
                         f"your answer: {chosen}\n"
                         f"explanation: {reason}\n\n"
@@ -463,7 +570,6 @@ class ReviewPopup(QDialog):
             QMessageBox.information(self, "Exported", f"Saved to:\n{path}")
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Failed to save file:\n{e}")
-
 
 
 class QuestionPopup(QDialog):
@@ -549,6 +655,54 @@ class QuestionPopup(QDialog):
         return self.result
 
 
+class BreakDialog(QDialog):
+    """15-minute break dialog with live countdown."""
+    def __init__(self, parent=None, total_seconds: int = 15 * 60):
+        super().__init__(parent)
+        self.setWindowTitle("Break")
+        self.setModal(True)
+        self.resize(340, 150)
+
+        self.remaining = int(total_seconds)
+        self.timer = QTimer(self)
+        self.timer.setInterval(1000)
+        self.timer.timeout.connect(self._tick)
+
+        v = QVBoxLayout(self)
+        self.title = QLabel("Break in progress")
+        self.title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.title.setStyleSheet("font-weight: 600; font-size: 14px;")
+        v.addWidget(self.title)
+
+        self.time_label = QLabel("")
+        self.time_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.time_label.setStyleSheet("font-family: monospace; font-size: 18px;")
+        v.addWidget(self.time_label)
+
+        row = QHBoxLayout()
+        row.addStretch(1)
+        self.end_btn = QPushButton("End Break Now")
+        self.end_btn.clicked.connect(self.accept)  # closes dialog
+        row.addWidget(self.end_btn)
+        v.addLayout(row)
+
+        self._update_label()
+        self.timer.start()
+
+    def _tick(self):
+        self.remaining -= 1
+        if self.remaining <= 0:
+            self.timer.stop()
+            self.remaining = 0
+            self._update_label()
+            self.accept()  # auto-close when timer reaches 0
+        else:
+            self._update_label()
+
+    def _update_label(self):
+        mm, ss = divmod(max(0, self.remaining), 60)
+        self.time_label.setText(f"{mm:02d}:{ss:02d}")
+
 # -----------------------------
 # Main Window
 # -----------------------------
@@ -577,12 +731,7 @@ class QuizMainWindow(QMainWindow):
             if opts:
                 random.shuffle(opts)
         self.user_answers: List[Optional[Set[str] | str]] = [None] * len(self.quiz)
-
-        if self.test_mode:
-            self.setWindowTitle("Quiz App (PyQt6) — TEST MODE")
-        else:
-            self.setWindowTitle("Quiz App (PyQt6) — PRACTICE MODE")
-
+        self.setWindowTitle("Quiz App (PyQt6)")
         self.resize(980, 700)
 
         # Timer
@@ -599,7 +748,6 @@ class QuizMainWindow(QMainWindow):
         head = QHBoxLayout(); head.setSpacing(8)
         self.pptx_label = QLabel(os.path.basename(self.pptx_path) if self.pptx_path else "")
         self.timer_label = QLabel("")
-        self.score_label = QLabel("Score: 0")
         self.flag_btn = QPushButton("Flag")
         self.flag_btn.setToolTip("Toggle flag for this question")
         self.flag_btn.clicked.connect(self._toggle_flag)
@@ -626,7 +774,6 @@ class QuizMainWindow(QMainWindow):
         self.flag_list_btn.clicked.connect(self._open_flag_list)
         head.addWidget(self.pptx_label); head.addStretch(1); head.addWidget(self.timer_label)
         head.addSpacing(12); head.addWidget(self.mode_badge)
-        head.addSpacing(12); head.addWidget(self.score_label)
         head.addSpacing(12); head.addWidget(self.flag_btn); head.addWidget(self.flag_list_btn)
         root.addLayout(head)
 
@@ -636,17 +783,39 @@ class QuizMainWindow(QMainWindow):
         self.question_label.setStyleSheet("font-size:16px; font-weight:600;")
         root.addWidget(self.question_label)
 
+        # Thumbnail under the question (click to open full image)
+        self.thumb_label = QLabel()
+        self.thumb_label.setVisible(False)  # hidden unless an image exists
+        self.thumb_label.setScaledContents(True)
+        self.thumb_label.setFixedWidth(60)
+        self.thumb_label.setFixedHeight(60)  
+        self.thumb_label.setStyleSheet(
+            "QLabel { border: 1px solid #e2e2e2; border-radius: 6px; background:#fafafa; }"
+        )
+        self.thumb_label.setCursor(Qt.CursorShape.PointingHandCursor)
+
+        def _thumb_click(_e):
+            self._show_image_for_current()
+        self.thumb_label.mousePressEvent = _thumb_click
+
+        root.addWidget(self.thumb_label)
+
         # Answers
-        self.answers_scroll = QScrollArea(); self.answers_scroll.setWidgetResizable(True)
-        self.answers_widget = QWidget(); self.answers_layout = QVBoxLayout(self.answers_widget)
-        self.answers_layout.setContentsMargins(0,0,0,0); self.answers_layout.setSpacing(6)
+        self.answers_scroll = QScrollArea()
+        self.answers_scroll.setWidgetResizable(True)
+        self.answers_widget = QWidget()
+        self.answers_layout = QVBoxLayout(self.answers_widget)
+        self.answers_layout.setContentsMargins(0,0,0,0)
+        self.answers_layout.setSpacing(6)
         self.answers_scroll.setWidget(self.answers_widget)
         root.addWidget(self.answers_scroll, 1)
 
         # Actions row
-        actions = QHBoxLayout(); actions.setSpacing(8)
+        actions = QHBoxLayout()
+        actions.setSpacing(8)
         self.show_image_btn = QPushButton("Show Image")
         self.show_image_btn.clicked.connect(self._show_image_for_current)
+
         # Image badge (clickable pill)
         self.image_badge = QLabel("Image available")
         self.image_badge.setVisible(False)  # hidden until we detect an image
@@ -695,8 +864,11 @@ class QuizMainWindow(QMainWindow):
         self.prev_btn = QPushButton("Previous"); self.prev_btn.clicked.connect(self._prev)
         self.next_btn = QPushButton("Next"); self.next_btn.clicked.connect(self._next)
         self.submit_btn = QPushButton("Submit"); self.submit_btn.clicked.connect(self._submit_current)
+        self._submit_base_text = self.submit_btn.text()
+        self._base_btn_style = self.submit_btn.styleSheet()  # often ""
         self.finish_btn = QPushButton("Finish"); self.finish_btn.clicked.connect(self._finish)
-        nav.addWidget(self.prev_btn); nav.addWidget(self.next_btn); nav.addStretch(1); nav.addWidget(self.submit_btn); nav.addWidget(self.finish_btn)
+        nav.addWidget(self.prev_btn); nav.addWidget(self.next_btn)
+        nav.addStretch(1); nav.addWidget(self.submit_btn); nav.addWidget(self.finish_btn)
         root.addLayout(nav)
 
         # Start timer if needed
@@ -718,6 +890,43 @@ class QuizMainWindow(QMainWindow):
         self._render_current_question()
 
     # ---- Helpers ----
+    def _toast(self, msg: str, ms: int = 1200):
+        if not hasattr(self, "_status"):
+            self._status = self.statusBar()
+        self._status.showMessage(msg, ms)
+
+
+    def _flash_button(self, btn: QPushButton, ok: bool = True, ms: int = 900):
+        # remember base text/style once, on the button itself
+        if btn.property("_base_text") is None:
+            btn.setProperty("_base_text", btn.text())
+        if btn.property("_base_style") is None:
+            btn.setProperty("_base_style", btn.styleSheet())
+
+        # cancel an in-flight flash (if any)
+        t = btn.property("_flash_timer")
+        if isinstance(t, QTimer):
+            t.stop()
+
+        # apply flash
+        btn.setText("✓ Saved" if ok else "Saved")
+        btn.setStyleSheet("background-color: #22aa55; color: white;")
+
+        # start a fresh timer to revert
+        timer = QTimer(self)
+        timer.setSingleShot(True)
+
+        def _revert():
+            base_text = btn.property("_base_text") or ""
+            base_style = btn.property("_base_style") or ""
+            btn.setText(base_text)
+            btn.setStyleSheet(base_style)
+            btn.setProperty("_flash_timer", None)
+
+        timer.timeout.connect(_revert)
+        btn.setProperty("_flash_timer", timer)
+        timer.start(ms)
+
 
     def _apply_quiz_settings(self, quiz_data: List[Dict], num_questions: int, allow_repeats: bool) -> List[Dict]:
         if not quiz_data:
@@ -730,9 +939,21 @@ class QuizMainWindow(QMainWindow):
             return [random.choice(quiz_data) for _ in range(num_questions)]
         # cap if no repeats
         return random.sample(quiz_data, k=len(quiz_data))
+    
+
+    def _reset_button(self, btn: QPushButton):
+        t = btn.property("_flash_timer")
+        if isinstance(t, QTimer):
+            t.stop()
+            btn.setProperty("_flash_timer", None)
+        base_text = btn.property("_base_text") or btn.text()
+        base_style = btn.property("_base_style") or ""
+        btn.setText(base_text)
+        btn.setStyleSheet(base_style)
+
+
 
     # ---- Timer & Breaks ----
-
     def _update_timer_label(self):
         mm, ss = divmod(max(0, self.remaining_seconds), 60)
         self.timer_label.setText(f"{mm:02d}:{ss:02d}")
@@ -754,26 +975,54 @@ class QuizMainWindow(QMainWindow):
     def _take_break(self):
         if self.break_taken or self.total_seconds <= 0 or not self.allow_breaks:
             return
-        resp = QMessageBox.question(self, "Take Break", "Start a single 15-minute break? Timer will be paused.",
-                                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+
+        resp = QMessageBox.question(
+            self,
+            "Take Break",
+            "Start a single 15-minute break? The test timer will be paused.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
         if resp != QMessageBox.StandardButton.Yes:
             return
-        # Pause timer
-        if self.timer.isActive():
+
+        # Pause main test timer
+        was_running = self.timer.isActive()
+        if was_running:
             self.timer.stop()
-        # Show simple blocking countdown dialog (minute-level to keep simple)
-        minutes_left = 15
-        while minutes_left > 0:
-            QMessageBox.information(self, "Break", f"Break in progress.\nReturn in {minutes_left} minute(s).")
-            minutes_left -= 1
+
+        # Show countdown dialog
+        dlg = BreakDialog(self, total_seconds=15 * 60)
+        dlg.exec()
+
+        # Mark the one allowed break as used
         self.break_taken = True
-        # Resume timer
-        if self.remaining_seconds > 0:
-            self.timer.start(1000)
         self._update_break_enabled()
 
-    # ---- Navigation ----
+        # Resume main timer if there’s time left
+        if was_running and self.remaining_seconds > 0:
+            self.timer.start(1000)
 
+
+    def _set_thumbnail_for_current(self):
+        """Show/hide the thumbnail based on the current question's image."""
+        if not self.quiz:
+            self.thumb_label.setVisible(False)
+            return
+        img = self.quiz[self.current_index].get("image")
+        if img and os.path.exists(img):
+            pix = QPixmap(img)
+            if not pix.isNull():
+                # scale keeping aspect ratio to the fixed height we set on the label
+                scaled = pix.scaledToHeight(self.thumb_label.height(), Qt.TransformationMode.SmoothTransformation)
+                self.thumb_label.setPixmap(scaled)
+                self.thumb_label.setToolTip("Click to view full image")
+                self.thumb_label.setVisible(True)
+                return
+        # no/invalid image → hide thumbnail
+        self.thumb_label.clear()
+        self.thumb_label.setVisible(False)
+    
+    # ---- Navigation ----
     def _prev(self):
         self._save_current_selection()
         if self.current_index > 0:
@@ -798,17 +1047,10 @@ class QuizMainWindow(QMainWindow):
                 " padding: 6px 12px; border-radius: 6px;"
                 " font-weight: 600;"
                 "}"
-                "QPushButton:hover { background-color: #d32f2f; }"
             )
         else:
             self.flags.add(idx)
-            self.flag_btn.setStyleSheet(
-                "QPushButton {"
-                " background-color: #e0e0e0; color: #000;"
-                " padding: 6px 12px; border-radius: 6px;"
-                "}"
-                "QPushButton:hover { background-color: #d5d5d5; }"
-            )
+            self.flag_btn.setStyleSheet("")
         self._render_current_question()  # to update header indicator
 
     def _open_flag_list(self):
@@ -877,11 +1119,10 @@ class QuizMainWindow(QMainWindow):
         q = self.quiz[self.current_index]
         text = q.get("question","")
         multi = bool(q.get("multi", False))
-        flag_str = " [FLAGGED]" if self.current_index in self.flags else ""
-        self.question_label.setText(f"{self.current_index+1}. {text}{flag_str}")
         has_img = bool(self.quiz[self.current_index].get("image"))
-        camera = "  📷" if has_img else ""
-        self.question_label.setText(f"{self.current_index+1}. {text}{flag_str}{camera}")
+        self.question_label.setText(f"{self.current_index+1}. {text}")
+        # Update thumbnail (if any) for this question
+        self._set_thumbnail_for_current()
 
         opts = q.get("options", []) or []
         if multi:
@@ -906,6 +1147,7 @@ class QuizMainWindow(QMainWindow):
                 for b in self.answer_group.buttons():
                     if b.property("optionText") == prev:
                         b.setChecked(True); break
+                    
         # Keep flag button style in sync with current question
         if self.current_index in self.flags:
             self.flag_btn.setStyleSheet(
@@ -913,11 +1155,10 @@ class QuizMainWindow(QMainWindow):
                 "QPushButton:hover { background-color: #d32f2f; }"
             )
         else:
-            self.flag_btn.setStyleSheet(
-                "QPushButton { background-color: #e0e0e0; color: #000; padding: 6px 12px; border-radius: 6px; }"
-                "QPushButton:hover { background-color: #d5d5d5; }"
-            )
-
+            self.flag_btn.setStyleSheet("")
+        # Ensure Submit button is back to normal on each question render
+        
+        self._reset_button(self.submit_btn)
         self.answers_scroll.verticalScrollBar().setValue(0)
         self._update_action_buttons_state()
 
@@ -926,9 +1167,9 @@ class QuizMainWindow(QMainWindow):
         if self.quiz:
             img = self.quiz[self.current_index].get("image")
             has_img = bool(img and os.path.exists(img))
-
         # Enable/disable and colorize the Show Image button
         self.show_image_btn.setEnabled(has_img)
+        self.show_image_btn.setText("Show Image")
         if has_img:
             # Primary color when available
             self.show_image_btn.setStyleSheet(
@@ -936,18 +1177,11 @@ class QuizMainWindow(QMainWindow):
                 " background-color: #0a7cff; color: white;"
                 " padding: 6px 12px; border-radius: 6px;"
                 "}"
-                "QPushButton:hover { background-color: #086ad6; }"
             )
-            self.show_image_btn.setText("Show Image")
         else:
             # Subtle/disabled look when no image
-            self.show_image_btn.setStyleSheet(
-                "QPushButton {"
-                " background-color: #e0e0e0; color: #777;"
-                " padding: 6px 12px; border-radius: 6px;"
-                "}"
-            )
-            self.show_image_btn.setText("Show Image")
+            self.show_image_btn.setStyleSheet("")
+
 
     def _save_current_selection(self):
         if not self.quiz:
@@ -966,14 +1200,14 @@ class QuizMainWindow(QMainWindow):
             self.user_answers[self.current_index] = btn.property("optionText") if btn else None
 
     # ---- Actions ----
-
     def _submit_current(self):
         if not self.quiz:
             return
         self._save_current_selection()
+        # Neutral behavior in Test Mode; no correctness reveal
+        self._flash_button(self.submit_btn, ok=True)
+
         if self.test_mode:
-            # In Test Mode, don’t reveal correctness
-            QMessageBox.information(self, "Saved", "Answer saved.")
             return
 
         # Normal mode: show correctness
@@ -990,10 +1224,8 @@ class QuizMainWindow(QMainWindow):
         elif isinstance(chosen, str):
             is_correct = chosen in correct
 
-        if is_correct:
-            QMessageBox.information(self, "Saved", "Answer saved. (Correct)")
-        else:
-            QMessageBox.information(self, "Saved", "Answer saved.")
+        self._toast("Answer saved.")
+        self._flash_button(self.submit_btn, ok=is_correct)
 
 
     def _check_current_answer(self):
@@ -1012,7 +1244,7 @@ class QuizMainWindow(QMainWindow):
         elif isinstance(chosen, str):
             is_correct = chosen in correct
         msg = "Correct!" if is_correct else "Not quite."
-        QMessageBox.information(self, "Check Answer", msg)
+        self._toast(msg)
 
     def _show_image_for_current(self):
         q = self.quiz[self.current_index]
@@ -1119,7 +1351,6 @@ class QuizMainWindow(QMainWindow):
         self.close()
         self._open_review_dialog()
 
-
 # -----------------------------
 # App flow
 # -----------------------------
@@ -1161,6 +1392,28 @@ def start_with_settings_dialog(parent: Optional[QWidget],
 
 def main_open_pptx_and_run():
     app = QApplication(sys.argv)
+    # Base theme for all QPushButtons and labels
+    app.setStyleSheet("""
+        QPushButton {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            background: #818589;
+            color: #111;
+        }
+        QPushButton:hover {
+            background: #e8e8e8;
+        }
+        QPushButton:disabled {
+            background: #36454F;
+            color: #888;
+        }
+
+        QLabel#Heading {
+            font-size: 16px;
+            font-weight: 600;
+        }
+    """)
     # Ask for PPTX
     dialog = QFileDialog()
     dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
@@ -1194,23 +1447,5 @@ def run_quiz_app(quiz_data: List[Dict], pptx_path: Optional[str] = None, *, time
 
 
 if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser(description="Quiz App (PyQt6)")
-    parser.add_argument("--pptx", help="Path to a PPTX to build the quiz from.")
-    parser.add_argument("--timer", type=int, default=0, help="Timer seconds (overrides settings dialog if >0).")
-    args = parser.parse_args()
-    app = QApplication(sys.argv)
-    if args.pptx:
-        if not os.path.exists(args.pptx):
-            QMessageBox.critical(None, "Error", f"PPTX not found:\\n{args.pptx}")
-            sys.exit(1)
-        quiz_data, pptx_path = build_quiz_from_pptx(args.pptx)
-        if not quiz_data:
-            QMessageBox.warning(None, "No Questions", "No questions were parsed from the PPTX.")
-            sys.exit(1)
-        w = start_with_settings_dialog(None, quiz_data, pptx_path=pptx_path)
-        if not w:
-            sys.exit(0)
-        sys.exit(app.exec())
-    else:
-        main_open_pptx_and_run()
+    ensure_requirements()
+    main_open_pptx_and_run()

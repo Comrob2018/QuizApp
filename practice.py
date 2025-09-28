@@ -4,7 +4,7 @@
 PyQt6 Quiz App 
 Capabilities:
 - Multiple Choice + Multi-Select questions
-- Images pulled from PPTX; click "Show Image" to zoom
+- Images pulled from PPTX; click image thumbnail to show enlarged image
 - Flag questions (toggle flag, jump to flagged list)
 - One 15-minute break (enabled only if timer > 0)
 - Calculator integrated
@@ -15,8 +15,10 @@ Capabilities:
 - Show Reason/Explanation (disabled in Test Mode)
 - Build question bank from PowerPoint slides (notes-driven answers)
 - Test Mode: disables Check/Reason during the run
-- Submit and check button show indications of saved or correct/in correct.
+- Submit button indicates answer saved
+- Check button will indicate correct or not quite if incorrect. 
 """
+
 from __future__ import annotations
 
 import os
@@ -135,9 +137,9 @@ from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QPushButton, QRadioButton,
     QVBoxLayout, QHBoxLayout, QGridLayout, QDialog, QMessageBox, QFileDialog,
     QScrollArea, QButtonGroup, QCheckBox, QLineEdit, QFrame, QSizePolicy,
-    QListWidget, QListWidgetItem
+    QListWidget, QListWidgetItem,
 )
-from PyQt6.QtCore import Qt, QTimer, QSize
+from PyQt6.QtCore import Qt, QTimer, QSize, QSettings
 from PyQt6.QtGui import QPixmap
 
 from pptx import Presentation
@@ -333,6 +335,48 @@ def extract_images_and_prepare_quiz(pptx_path: str, out_dir: Optional[str] = Non
 def build_quiz_from_pptx(pptx_path: str) -> Tuple[List[Dict], str]:
     data = extract_images_and_prepare_quiz(pptx_path)
     return data, pptx_path
+
+# -----------------------------
+#       --- THEME QSS ---
+# -----------------------------
+
+LIGHT_QSS = """
+QWidget { background: #e0e0e0; color: #111; }
+QLabel#Heading { font-size: 16px; font-weight: 600; }
+QPushButton {
+  padding: 6px 12px; border-radius: 6px; font-size: 13px;
+  background: #f2f2f2; color: #111;
+}
+QPushButton:hover { background: #e8e8e8; }
+QPushButton:disabled { background: #dcdcdc; color: #777; }
+QScrollArea { border: 1px solid #d8d8d8; border-radius: 8px; }
+QFrame[card="true"] { border: 1px solid #d8d8d8; border-radius: 10px; background:#fafafa; }
+"""
+
+DARK_QSS = """
+QWidget { background: #1c1c1c; color: #eaeaea; }
+QLabel#Heading { font-size: 16px; font-weight: 600; }
+QPushButton {
+  padding: 6px 12px; border-radius: 6px; font-size: 13px;
+  background: #2a2a2a; color: #f0f0f0;
+}
+QPushButton:hover { background: #333333; }
+QPushButton:disabled { background: #2a2a2a; color: #777; }
+QScrollArea { border: 1px solid #2f2f2f; border-radius: 8px; }
+QFrame[card="true"] { border: 1px solid #2f2f2f; border-radius: 10px; background:#242424; }
+"""
+
+def apply_theme(app: "QApplication", theme: str):
+    if theme == "dark":
+        app.setStyleSheet(DARK_QSS)
+    else:
+        app.setStyleSheet(LIGHT_QSS)
+    QSettings("YourOrg", "QuizApp").setValue("theme", theme)
+
+def load_theme_pref() -> str:
+    v = QSettings("YourOrg", "QuizApp").value("theme", "dark")
+    return v if v in ("light", "dark") else "light"
+
 
 # -----------------------------
 # Dialogs: Image viewer, Calculator, Review, Settings
@@ -752,6 +796,9 @@ class QuizMainWindow(QMainWindow):
         self.flag_btn.setToolTip("Toggle flag for this question")
         self.flag_btn.clicked.connect(self._toggle_flag)
         self.flag_list_btn = QPushButton("Flagged…")
+        self.theme_btn = QPushButton("🌓 Theme")
+        self.theme_btn.setToolTip("Toggle light/dark theme")
+        self.theme_btn.clicked.connect(self._toggle_theme)
 
         # --- Mode badge (Practice vs Test) ---
         self.mode_badge = QLabel()
@@ -772,7 +819,7 @@ class QuizMainWindow(QMainWindow):
             )
 
         self.flag_list_btn.clicked.connect(self._open_flag_list)
-        head.addWidget(self.pptx_label); head.addStretch(1); head.addWidget(self.timer_label)
+        head.addWidget(self.theme_btn); head.addStretch(1); head.addWidget(self.timer_label)
         head.addSpacing(12); head.addWidget(self.mode_badge)
         head.addSpacing(12); head.addWidget(self.flag_btn); head.addWidget(self.flag_list_btn)
         root.addLayout(head)
@@ -895,6 +942,18 @@ class QuizMainWindow(QMainWindow):
             self._status = self.statusBar()
         self._status.showMessage(msg, ms)
 
+    def _toggle_theme(self):
+        app = QApplication.instance()
+        current = load_theme_pref()
+        new_theme = "dark" if current == "light" else "light"
+        apply_theme(app, new_theme)
+
+        # reapply any per-button override colors (flag/image states)
+        self._update_action_buttons_state()
+        # if you colorize flag button when flagged, also:
+        if hasattr(self, "flags") and self.current_index in self.flags:
+            # your existing flagged color override will re-run in _render_current_question
+            self._render_current_question()
 
     def _flash_button(self, btn: QPushButton, ok: bool = True, ms: int = 900):
         # remember base text/style once, on the button itself
@@ -1405,27 +1464,8 @@ def start_with_settings_dialog(parent: Optional[QWidget],
 def main_open_pptx_and_run():
     app = QApplication(sys.argv)
     # Base theme for all QPushButtons and labels
-    app.setStyleSheet("""
-        QPushButton {
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 13px;
-            background: #818589;
-            color: #111;
-        }
-        QPushButton:hover {
-            background: #e8e8e8;
-        }
-        QPushButton:disabled {
-            background: #36454F;
-            color: #888;
-        }
+    apply_theme(app, load_theme_pref())
 
-        QLabel#Heading {
-            font-size: 16px;
-            font-weight: 600;
-        }
-    """)
     # Ask for PPTX
     dialog = QFileDialog()
     dialog.setFileMode(QFileDialog.FileMode.ExistingFile)

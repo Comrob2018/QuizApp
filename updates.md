@@ -1,3 +1,10 @@
+V 4.3.2 
+- Check answer button functions like submit.
+- Correct answers flash green/correct or red/not quite.
+
+V 4.3.1
+- Submit button no longer has a popup, it highlights green and states saved with a check
+
 V 4.3
 - Changed Picture functionality.
 - Added thumbnails and changed show image button functionality.

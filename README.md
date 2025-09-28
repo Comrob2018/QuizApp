@@ -1,4 +1,4 @@
-# QuizApp v1.1.5
+# QuizApp v1.1.6
 
 A feature-rich quiz application built with **Python 3.13** and **PyQt6**, designed to run practice or test-style quizzes using PowerPoint slide decks (`.pptx`) as the question bank.
 
@@ -113,6 +113,19 @@ pyinstaller --onefile --windowed --icon=ask.png .\practice.py
 
 
 <img width="519" height="275" alt="image" src="https://github.com/user-attachments/assets/3fb29005-06d9-497c-a45b-076cb7a48528" />
+
+
+- Dark Mode:
+
+
+<img width="971" height="699" alt="image" src="https://github.com/user-attachments/assets/2b4b4edd-ab29-42b0-b913-ed986d7c5bde" />
+
+
+- Light Mode:
+
+
+<img width="974" height="695" alt="image" src="https://github.com/user-attachments/assets/9c419804-29d9-4b90-9e29-f25947d8f2e2" />
+
 
 
 - Example quiz in **Practice Mode**

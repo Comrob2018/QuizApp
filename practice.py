@@ -17,6 +17,7 @@ Capabilities:
 - Test Mode: disables Check/Reason during the run
 - Submit button indicates answer saved
 - Check button will indicate correct or not quite if incorrect. 
+- Light/Dark mode button added
 """
 
 from __future__ import annotations
@@ -1501,3 +1502,4 @@ def run_quiz_app(quiz_data: List[Dict], pptx_path: Optional[str] = None, *, time
 if __name__ == "__main__":
     ensure_requirements()
     main_open_pptx_and_run()
+

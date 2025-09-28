@@ -112,19 +112,25 @@ pyinstaller --onefile --windowed --icon=ask.png .\practice.py
 - Quiz Settings: (Will pull max number of questions from number of slides in the presentation)
 
 
-<img width="514" height="277" alt="image" src="https://github.com/user-attachments/assets/56cd86c1-0dd3-4822-b0d5-d99b1a4a54fd" />
+<img width="519" height="275" alt="image" src="https://github.com/user-attachments/assets/3fb29005-06d9-497c-a45b-076cb7a48528" />
 
 
 - Example quiz in **Practice Mode**
 
   
-<img width="976" height="729" alt="image" src="https://github.com/user-attachments/assets/ac1af6bb-da9f-452d-a245-0039fc5443e9" />
+<img width="977" height="696" alt="image" src="https://github.com/user-attachments/assets/1677193a-c386-4563-bac2-dc43e949829e" />
 
 
 - Example quiz in **Test Mode**
 
 
 <img width="972" height="694" alt="image" src="https://github.com/user-attachments/assets/d89c2c68-aa33-4213-b9c9-ff3921dc3210" />
+
+
+- Unanswered questions warning
+
+
+<img width="416" height="117" alt="image" src="https://github.com/user-attachments/assets/b0046c31-7dd7-4ff3-9904-013d6fc4b5ec" />
 
 
 - Question with picture (blue "Show Image" button and a thumbnail beneath the question text when image is present, click either to enlarge the picture)
@@ -139,9 +145,31 @@ pyinstaller --onefile --windowed --icon=ask.png .\practice.py
 <img width="556" height="219" alt="image" src="https://github.com/user-attachments/assets/550834f3-e57c-4445-be90-e6cb551a7720" />
 
 
-
 - Exported review with ✓ / ✗ next to questions.
 
 
 <img width="1900" height="327" alt="image" src="https://github.com/user-attachments/assets/8d067d18-ced5-49ae-8c3d-f43be1566251" />
 
+
+- Submit button answer saved
+
+
+<img width="982" height="63" alt="image" src="https://github.com/user-attachments/assets/f73b7367-2e7b-4121-bd14-b42473e3277c" />
+
+
+- Check answer button correct
+
+
+<img width="372" height="120" alt="image" src="https://github.com/user-attachments/assets/5e77a54d-60f9-477e-a8ae-d0c2f107c8a5" />
+
+
+- Check answer button not quite
+
+
+<img width="362" height="118" alt="image" src="https://github.com/user-attachments/assets/b964d9c8-3a27-427e-8c9e-0cee605a2828" />
+
+
+- Flagged questions popup
+
+
+<img width="273" height="270" alt="image" src="https://github.com/user-attachments/assets/331b74db-a825-4bb2-a4ae-831aec43ba5d" />

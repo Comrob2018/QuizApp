@@ -1,3 +1,6 @@
+V 1.1.6
+- Added light/dark mode toggle
+
 V 1.1.5 
 - Check answer button functions like submit.
 - Correct answers flash green/correct or red/not quite.

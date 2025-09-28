@@ -4,7 +4,7 @@
 PyQt6 Quiz App 
 Capabilities:
 - Multiple Choice + Multi-Select questions
-- Images pulled from PPTX; click "Show Image" or image thumbnail to open image
+- Images pulled from PPTX; click "Show Image" to zoom
 - Flag questions (toggle flag, jump to flagged list)
 - One 15-minute break (enabled only if timer > 0)
 - Calculator integrated
@@ -15,7 +15,7 @@ Capabilities:
 - Show Reason/Explanation (disabled in Test Mode)
 - Build question bank from PowerPoint slides (notes-driven answers)
 - Test Mode: disables Check/Reason during the run
-- Submit button indicates answer submission instead of popup for saved answer.
+- Submit and check button show indications of saved or correct/in correct.
 """
 from __future__ import annotations
 
@@ -1159,6 +1159,7 @@ class QuizMainWindow(QMainWindow):
         # Ensure Submit button is back to normal on each question render
         
         self._reset_button(self.submit_btn)
+        self._reset_button(self.check_btn)
         self.answers_scroll.verticalScrollBar().setValue(0)
         self._update_action_buttons_state()
 
@@ -1205,6 +1206,7 @@ class QuizMainWindow(QMainWindow):
             return
         self._save_current_selection()
         # Neutral behavior in Test Mode; no correctness reveal
+        self._toast("Answer saved.")
         self._flash_button(self.submit_btn, ok=True)
 
         if self.test_mode:
@@ -1243,6 +1245,16 @@ class QuizMainWindow(QMainWindow):
             is_correct = chosen == set(correct)
         elif isinstance(chosen, str):
             is_correct = chosen in correct
+        if is_correct:
+            self._flash_button(self.check_btn, ok=True, ms=900)
+        else:
+            # slight red flash
+            self.check_btn.setProperty("_base_text", self.check_btn.text())
+            self.check_btn.setProperty("_base_style", self.check_btn.styleSheet())
+            self.check_btn.setText("Not quite")
+            self.check_btn.setStyleSheet("background-color: #b00020; color: white;")
+            QTimer.singleShot(900, lambda: self._reset_button(self.check_btn))
+
         msg = "Correct!" if is_correct else "Not quite."
         self._toast(msg)
 

@@ -1,4 +1,4 @@
-# QuizApp v4.3.2
+# QuizApp v1.1.5
 
 A feature-rich quiz application built with **Python 3.13** and **PyQt6**, designed to run practice or test-style quizzes using PowerPoint slide decks (`.pptx`) as the question bank.
 

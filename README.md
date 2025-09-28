@@ -1,4 +1,4 @@
-# QuizApp v4.3
+# QuizApp v4.3.2
 
 A feature-rich quiz application built with **Python 3.13** and **PyQt6**, designed to run practice or test-style quizzes using PowerPoint slide decks (`.pptx`) as the question bank.
 
@@ -15,14 +15,14 @@ A feature-rich quiz application built with **Python 3.13** and **PyQt6**, design
 
 - **Images**
   - Slide images automatically imported.
-  - Always-visible **Show Image** button (colorized when image is available).
+  - Always-visible **Show Image** button (colorized blue when image is available).
   - Click **Show Image** or Thumbnail to view image in a zoomable window.
   - Thumbnail is shown below question text when an image exists.
 
 - **Modes**
-  - **Practice Mode**: Check answers immediately, see reasons.
+  - **Practice Mode**: Check answers immediately, see reasons for each question.
   - **Test Mode**: No feedback until the end.
-  - Visual **mode badge** in the header and window title.
+  - Visual **mode badge** in the header next to flag button/timer.
 
 - **Quiz Options**
   - Choose number of questions (all or random subset).
@@ -33,9 +33,10 @@ A feature-rich quiz application built with **Python 3.13** and **PyQt6**, design
   - Integrated calculator.
 
 - **Answer Handling**
-  - Submit saves answers (neutral in Test Mode).
+  - Submit saves answers (always neutral now).
   - Navigation with Next/Previous without reshuffling.
   - **Answer order randomized once** at quiz creation (stable during run).
+  - 
 
 - **Review Screen**
   - Accessible when clicking **Finish** (always clickable; warns if unanswered).
@@ -62,10 +63,8 @@ README.md        # This file
 
 ### Requirements
 - Python **3.13+**
-- Install dependencies:
-  ```bash
-  pip install PyQt6 python-pptx
-  ```
+- Script will check for dependencies on its own at start
+
 
 ### Run
 ```bash

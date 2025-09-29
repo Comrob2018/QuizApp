@@ -17,7 +17,8 @@ Capabilities:
 - Test Mode: disables Check/Reason during the run
 - Submit button indicates answer saved
 - Check button will indicate correct or not quite if incorrect. 
-- Light/Dark mode button added
+- Built in dependency checking for required libraries and this program. 
+  It not latest version it will prompt you to download the latest version.
 """
 
 from __future__ import annotations
@@ -29,6 +30,12 @@ import random
 import subprocess
 from dataclasses import dataclass
 from typing import List, Dict, Set, Tuple, Optional, Callable
+
+import json
+from urllib.request import Request, urlopen
+from urllib.error import URLError, HTTPError
+
+VERSION = "1.1.7"
 
 #---------------------------------
 #  Checking for required libraries
@@ -87,52 +94,137 @@ def _pip_install(args: List[str]) -> None:
     subprocess.check_call(cmd)
 
 
+def _force_popup_update_warning(download_page_url: str, parent=None) -> None:
+    """
+    Always show a QMessageBox warning. If no QApplication exists yet,
+    create a temporary one just for this modal dialog.
+    """
+    try:
+        from PyQt6.QtWidgets import QApplication, QMessageBox
+        from PyQt6.QtGui import QDesktopServices
+        from PyQt6.QtCore import QUrl
+    except Exception:
+        # If PyQt isn't available for some reason, silently return.
+        return
+
+    app_created = False
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication(sys.argv)
+        app_created = True
+
+    box = QMessageBox(parent)
+    box.setIcon(QMessageBox.Icon.Warning)
+    box.setWindowTitle("Update Available")
+    box.setText(
+        "Your version is not the latest version.\n\n"
+        "For the latest version and features please download a new version from\n"
+        f"{download_page_url}"
+    )
+    open_btn = box.addButton("Open Download Page", QMessageBox.ButtonRole.AcceptRole)
+    box.addButton("OK", QMessageBox.ButtonRole.RejectRole)
+    box.exec()
+
+    if box.clickedButton() is open_btn:
+        QDesktopServices.openUrl(QUrl(download_page_url))
+
+
 def ensure_requirements() -> None:
     """
     Ensure required packages (PyQt6, python-pptx) are present at minimum versions.
     Prompts once (if interactive). Installs/updates both in one pip call when needed.
     Exits with a helpful message if requirements remain unsatisfied.
+    Then compare local version of program with github.
     """
     requirements = [
         ("PyQt6",       "6.5.0"),   # adjust if you need a newer baseline
         ("python-pptx", "0.6.21"),
     ]
-
+    
     to_install = [f"{name}>={minver}" for (name, minver) in requirements if _needs(name, minver)]
 
     if not to_install:
         # Optional: print once for verbose mode
-        # print("✅ All dependencies satisfied.")
-        return
-
-    # One prompt for all missing/outdated packages
-    msg_lines = [
-        "The following packages are missing or below the required version:",
-        *[f"  - {spec}" for spec in to_install],
-        "",
-    ]
-    print("\n".join(msg_lines))
-
-    if _ask_yes_no("Install/upgrade them now? (y/n): ", default_no=True):
-        try:
-            print("Installing/upgrading: " + ", ".join(to_install))
-            _pip_install(to_install)
-        except subprocess.CalledProcessError as e:
-            print(f"❌ Installation failed: {e}")
-            sys.exit(1)
+        #print("✅ All dependencies satisfied.")
+        pass
+        
     else:
-        print("❌ Required packages not installed. You can install them with:")
-        print(f"   {sys.executable} -m pip install --upgrade " + " ".join(to_install))
-        sys.exit(1)
+        # One prompt for all missing/outdated packages
+        msg_lines = [
+            "The following packages are missing or below the required version:",
+            *[f"  - {spec}" for spec in to_install],
+            "",
+        ]
+        print("\n".join(msg_lines))
 
-    # Re-verify after pip run
-    still_missing = [f"{n}>={v}" for (n, v) in requirements if _needs(n, v)]
-    if still_missing:
-        print("❌ Some requirements are still unsatisfied after installation:")
-        for spec in still_missing:
-            print("  -", spec)
-        sys.exit(1)
-    # print("✅ Dependencies are now satisfied.")
+        if _ask_yes_no("Install/upgrade them now? (y/n): ", default_no=True):
+            try:
+                print("Installing/upgrading: " + ", ".join(to_install))
+                _pip_install(to_install)
+            except subprocess.CalledProcessError as e:
+                print(f"❌ Installation failed: {e}")
+                sys.exit(1)
+        else:
+            print("❌ Required packages not installed. You can install them with:")
+            print(f"   {sys.executable} -m pip install --upgrade " + " ".join(to_install))
+            sys.exit(1)
+
+        # Re-verify after pip run
+        still_missing = [f"{n}>={v}" for (n, v) in requirements if _needs(n, v)]
+        if still_missing:
+            print("❌ Some requirements are still unsatisfied after installation:")
+            for spec in still_missing:
+                print("  -", spec)
+            sys.exit(1)
+        #print("✅ Dependencies are now satisfied.")
+    
+    # -----------------------------
+    # GitHub VERSION file check
+    # -----------------------------
+    
+    # Config: your raw VERSION file and the page you want to open
+    GITHUB_VERSION_FILE_URL = "https://raw.githubusercontent.com/Comrob2018/QuizApp/main/VERSION"
+    GITHUB_DOWNLOAD_PAGE    = "https://github.com/Comrob2018/QuizApp/tree/main"
+
+    try:
+
+        def _fetch_remote_text(url: str, timeout: float = 4.0) -> str | None:
+            try:
+                req = Request(url, headers={
+                    "Accept": "text/plain, */*;q=0.1",
+                    "User-Agent": "quiz-app-version-check"
+                })
+                with urlopen(req, timeout=timeout) as resp:
+                    return resp.read().decode("utf-8", errors="replace")
+            except Exception:
+                return None
+
+        def _extract_remote_version(text: str) -> str | None:
+            if not text:
+                return None
+            first = text.strip().splitlines()[0].strip()
+            m = re.search(r"\b\d+(?:\.\d+){1,3}[A-Za-z0-9\-\.]*\b", first)
+            if m:
+                return m.group(0)
+            # JSON fallback
+            try:
+                obj = json.loads(text)
+                cand = obj.get("latest") or obj.get("version") or obj.get("tag_name")
+                if isinstance(cand, str):
+                    return cand[1:] if cand.lower().startswith("v") else cand
+            except Exception:
+                pass
+            return None
+
+        remote_text = _fetch_remote_text(GITHUB_VERSION_FILE_URL)
+        remote_ver  = _extract_remote_version(remote_text) if remote_text else None
+
+        if remote_ver and _parse_version(VERSION) < _parse_version(remote_ver):
+            _force_popup_update_warning(GITHUB_DOWNLOAD_PAGE)
+
+    except Exception:
+        # Swallow any network/parse errors to avoid blocking startup.
+        pass
 
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QPushButton, QRadioButton,
@@ -145,6 +237,7 @@ from PyQt6.QtGui import QPixmap
 
 from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE_TYPE
+
 
 
 # -----------------------------
@@ -1502,4 +1595,3 @@ def run_quiz_app(quiz_data: List[Dict], pptx_path: Optional[str] = None, *, time
 if __name__ == "__main__":
     ensure_requirements()
     main_open_pptx_and_run()
-

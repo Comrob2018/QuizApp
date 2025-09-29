@@ -239,7 +239,6 @@ from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE_TYPE
 
 
-
 # -----------------------------
 # Data model
 # -----------------------------
@@ -384,7 +383,7 @@ def _map_correct_tokens_to_options(tokens: Set[str], options: List[str]) -> Set[
 def extract_images_and_prepare_quiz(pptx_path: str, out_dir: Optional[str] = None) -> List[Dict]:
     prs = Presentation(pptx_path)
     stem = os.path.splitext(os.path.basename(pptx_path))[0]
-    base_out = out_dir or os.path.join(os.path.dirname(pptx_path), f"{stem}_assets")
+    base_out = out_dir or os.path.join(os.path.dirname(pptx_path), f"extracted_images")
     os.makedirs(base_out, exist_ok=True)
 
     quiz_items: List[Dict] = []
@@ -405,7 +404,7 @@ def extract_images_and_prepare_quiz(pptx_path: str, out_dir: Optional[str] = Non
                 img_counter += 1
                 image = shp.image
                 ext = image.ext or "png"
-                img_name = f"slide-{s_idx:02d}-{img_counter:02d}.{ext}"
+                img_name = f"{stem}-slide-{s_idx:02d}-{img_counter:02d}.{ext}"
                 out_path = os.path.join(base_out, img_name)
                 with open(out_path, "wb") as f:
                     f.write(image.blob)
@@ -500,7 +499,7 @@ THEMES = {
     },
 }
 
-# Human-friendly names -> keys (what you show in the dropdown)
+# Human-friendly names -> keys (what shows in the dropdown)
 THEME_NAMES = {
     "Light": "light",
     "Dark": "dark",
@@ -515,6 +514,7 @@ THEME_NAMES = {
     "Material (Indigo, Light)": "material_indigo_light",
     "High Contrast": "high_contrast",
 }
+
 # Convenience: inverse map if you ever need to go from key -> label
 THEME_LABELS = {v: k for k, v in THEME_NAMES.items()}
 
@@ -570,7 +570,7 @@ def _build_stylesheet_from_theme(t: dict) -> str:
 def apply_theme(app: "QApplication", theme_name: str):
     # fallback if unknown
     if theme_name not in THEMES:
-        theme_name = "light"
+        theme_name = "tokyo_night"
     t = THEMES[theme_name]
 
     # Palette for native widgets (selection colors, text, etc.)
@@ -751,7 +751,6 @@ class ReviewPopup(QDialog):
             correct = r.get("correct", "")
             chosen = r.get("chosen", "")
             reason = r.get("explanation", "")
-            flagged = r.get("flagged", False)
 
             is_incorrect = chosen.strip() and (chosen != correct)
 
@@ -821,7 +820,6 @@ class ReviewPopup(QDialog):
                     correct = r.get("correct", "")
                     chosen = r.get("chosen", "")
                     reason = r.get("explanation", "")
-                    flagged = r.get("flagged", False)
 
                     # decide if correct/incorrect
                     is_incorrect = chosen.strip() and (chosen != correct)
@@ -853,7 +851,7 @@ class QuestionPopup(QDialog):
         outer.setContentsMargins(8,8,8,8)
 
         row1 = QHBoxLayout()
-        row1.addWidget(QLabel(f"Number of questions (0=all, up to {max_questions}; >{max_questions} allows repeats):"))
+        row1.addWidget(QLabel(f"Number of questions (0=all, up to {max_questions}, for >{max_questions} you have to allow repeat questions):"))
         self.count_edit = QLineEdit("0")
         row1.addWidget(self.count_edit)
         outer.addLayout(row1)
@@ -1012,8 +1010,8 @@ class QuizMainWindow(QMainWindow):
 
         # Header
         head = QHBoxLayout(); head.setSpacing(8)
-        self.pptx_label = QLabel(os.path.basename(self.pptx_path) if self.pptx_path else "")
         self.timer_label = QLabel("")
+        self.timer_label.setStyleSheet("font-family: monospace; font-size: 18px;")
         self.flag_btn = QPushButton("Flag")
         self.flag_btn.setToolTip("Toggle flag for this question")
         self.flag_btn.clicked.connect(self._toggle_flag)
@@ -1169,7 +1167,7 @@ class QuizMainWindow(QMainWindow):
         # Break availability
         self._update_break_enabled()
 
-        # Render first
+        # Render first question
         self.current_index = 0
         self.score = 0
         self._render_current_question()

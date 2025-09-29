@@ -156,19 +156,20 @@ If the version file can’t be fetched (offline / rate limited), the app continu
 <img width="519" height="275" alt="image" src="https://github.com/user-attachments/assets/3fb29005-06d9-497c-a45b-076cb7a48528" />
 
 
--There are multiple themes to choose from: "Light", "Dark", "Solarized Light", "Solarized Dark", "Nord", "Dracula", "Gruvbox (Dark)", "Catppuccin (Mocha)", "Tokyo Night", "One Dark", "Material (Indigo, Light)", and "High Contrast"
-}
+-There are multiple themes to choose from: "Dark", "Solarized Dark", "Nord", "Gruvbox (Dark)", "Tokyo Night", "High Contrast", "Sapphire", "Crimson Ember", "Dark Rose", "Cyberpunk", and "Hacker Terminal"
+
 
 - Dark Mode:
 
 
-<img width="971" height="699" alt="image" src="https://github.com/user-attachments/assets/2b4b4edd-ab29-42b0-b913-ed986d7c5bde" />
+<img width="975" height="693" alt="image" src="https://github.com/user-attachments/assets/a4227485-8617-46b0-8588-63ec8cfc7f4b" />
 
 
-- Light Mode:
+
+- Cyberpunk:
 
 
-<img width="974" height="695" alt="image" src="https://github.com/user-attachments/assets/9c419804-29d9-4b90-9e29-f25947d8f2e2" />
+<img width="978" height="694" alt="image" src="https://github.com/user-attachments/assets/958c7c23-f382-473b-9178-cec4b51dd52f" />
 
 
 

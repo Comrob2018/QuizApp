@@ -1,5 +1,5 @@
 V 1.2.0
-- Reformated themes and added a more comprehensive list. 
+- Reformated the functionality of themes and added a more comprehensive list. 
 
 V 1.1.7
 - Added version checking with github. 

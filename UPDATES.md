@@ -1,3 +1,6 @@
+V 1.2.1
+- Added shorthand definitions to docstrings and changed the 
+
 V 1.2.0
 - Reformated the functionality of themes and added a more comprehensive list. 
 

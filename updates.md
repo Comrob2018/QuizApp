@@ -1,3 +1,6 @@
+V 1.1.7
+- Added version checking with github. 
+
 V 1.1.6
 - Added light/dark mode toggle
 

@@ -19,6 +19,37 @@ Capabilities:
 - Check button will indicate correct or not quite if incorrect. 
 - Built in dependency checking for required libraries and this program. 
   It not latest version it will prompt you to download the latest version.
+
+| Shorthand  | Longhand meaning                                                                 |
+| ---------- | -------------------------------------------------------------------------------- |
+| `q`        | The current **question dict** (or question text in review/export loops).         |
+| `opts`     | List of **answer option strings** for a question.                                |
+| `cb`       | A **QCheckBox** representing one multi-select option.                            |
+| `btn`      | Generic **button** object (QPushButton/QRadioButton) used in helpers and rows.   |
+| `dlg`      | A **dialog** instance (e.g., `BreakDialog`, flag list `QDialog`).                |
+| `v`        | A **QVBoxLayout** (vertical layout) placeholder var.                             |
+| `row`      | A **QHBoxLayout** (or row container) placeholder var for footer/action rows.     |
+| `hl`       | A **horizontal layout** used inside an answer row.                               |
+| `lst`      | The **QListWidget** that lists flagged questions.                                |
+| `it`       | The **currently selected item** (`QListWidgetItem`) in the flag dialog.          |
+| `idx`      | The **current question index** (int).                                            |
+| `mm`, `ss` | **Minutes** / **seconds** when formatting timers.                                |
+| `img`      | The **image path** for the current question.                                     |
+| `pix`      | A **QPixmap** loaded from `img`.                                                 |
+| `scaled`   | The **scaled pixmap** used for the thumbnail label.                              |
+| `ms`       | **Milliseconds** for flash/revert timers on buttons.                             |
+| `t`        | The in-flight **QTimer** used to revert a flashed button.                        |
+| `n`        | **Requested question count** from Settings.                                      |
+| `r`        | One **review/export row dict** while writing the .txt.                           |
+| `i`        | **Loop index** (1-based in export).                                              |
+| `w`        | Generic **widget** variable in “add this widget” loops.                          |
+| `cw`       | The **central widget** (`QWidget`) for the main window.                          |
+| `root`     | The main window’s **root layout** (`QVBoxLayout`).                               |
+| `head`     | The **header row** layout (timer, theme, mode, flags).                           |
+| `actions`  | The **actions row** (Show Image, Why, Check, Break…).                            |
+| `nav`      | The **navigation row** (Prev/Next/Submit/Finish).                                |
+| `_e`       | Throwaway **event object** in mouse handlers.                                    |
+
 """
 
 from __future__ import annotations
@@ -35,7 +66,7 @@ import json
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 
-VERSION = "1.2.0"
+VERSION = "1.2.1"
 
 #---------------------------------
 #  Checking for required libraries
@@ -121,11 +152,11 @@ def _force_popup_update_warning(download_page_url: str, parent=None) -> None:
         "For the latest version and features please download a new version from\n"
         f"{download_page_url}"
     )
-    open_btn = box.addButton("Open Download Page", QMessageBox.ButtonRole.AcceptRole)
+    open_button = box.addButton("Open Download Page", QMessageBox.ButtonRole.AcceptRole)
     box.addButton("OK", QMessageBox.ButtonRole.RejectRole)
     box.exec()
 
-    if box.clickedButton() is open_btn:
+    if box.clickedButton() is open_button:
         QDesktopServices.openUrl(QUrl(download_page_url))
 
 
@@ -150,12 +181,12 @@ def ensure_requirements() -> None:
         
     else:
         # One prompt for all missing/outdated packages
-        msg_lines = [
+        message_lines = [
             "The following packages are missing or below the required version:",
             *[f"  - {spec}" for spec in to_install],
             "",
         ]
-        print("\n".join(msg_lines))
+        print("\n".join(message_lines))
 
         if _ask_yes_no("Install/upgrade them now? (y/n): ", default_no=True):
             try:
@@ -176,7 +207,6 @@ def ensure_requirements() -> None:
             for spec in still_missing:
                 print("  -", spec)
             sys.exit(1)
-        #print("✅ Dependencies are now satisfied.")
     
     # -----------------------------
     # GitHub VERSION file check
@@ -237,7 +267,6 @@ from PyQt6.QtGui import QPixmap
 
 from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE_TYPE
-
 
 # -----------------------------
 # Data model
@@ -398,14 +427,14 @@ def extract_images_and_prepare_quiz(pptx_path: str, out_dir: Optional[str] = Non
 
         # First picture on slide becomes question image
         q_image_path = None
-        img_counter = 0
+        image_counter = 0
         for shp in slide.shapes:
             if shp.shape_type == MSO_SHAPE_TYPE.PICTURE:
-                img_counter += 1
+                image_counter += 1
                 image = shp.image
                 ext = image.ext or "png"
-                img_name = f"{stem}-slide-{s_idx:02d}-{img_counter:02d}.{ext}"
-                out_path = os.path.join(base_out, img_name)
+                image_name = f"{stem}-slide-{s_idx:02d}-{image_counter:02d}.{ext}"
+                out_path = os.path.join(base_out, image_name)
                 with open(out_path, "wb") as f:
                     f.write(image.blob)
                 if not q_image_path:
@@ -435,21 +464,10 @@ def build_quiz_from_pptx(pptx_path: str) -> Tuple[List[Dict], str]:
 
 THEMES = {
     # your QSS-based palettes, expressed as tokens too
-    "light": {
-        "bg":"#e0e0e0","surface":"#f2f2f2","surface_alt":"#e8e8e8","text":"#111111",
-        "muted":"#777777","border":"#d8d8d8","primary":"#3F51B5","accent":"#E91E63",
-        "success":"#4CAF50","warn":"#FF9800","error":"#F44336"
-    },
     "dark": {
         "bg":"#1c1c1c","surface":"#2a2a2a","surface_alt":"#333333","text":"#eaeaea",
         "muted":"#777777","border":"#2f2f2f","primary":"#7AA2F7","accent":"#BB9AF7",
         "success":"#9ECE6A","warn":"#E0AF68","error":"#F7768E"
-    },
-
-    "solarized_light": {
-        "bg":"#fdf6e3","surface":"#eee8d5","surface_alt":"#e4ddc9","text":"#073642",
-        "muted":"#586e75","border":"#93a1a1","primary":"#268bd2","accent":"#6c71c4",
-        "success":"#859900","warn":"#b58900","error":"#dc322f"
     },
     "solarized_dark": {
         "bg":"#002b36","surface":"#073642","surface_alt":"#0a3a46","text":"#eee8d5",
@@ -471,11 +489,6 @@ THEMES = {
         "muted":"#A89984","border":"#A89984","primary":"#83A598","accent":"#D3869B",
         "success":"#B8BB26","warn":"#FABD2F","error":"#FB4934"
     },
-    "catppuccin_mocha": {
-        "bg":"#1E1E2E","surface":"#313244","surface_alt":"#45475a","text":"#CDD6F4",
-        "muted":"#A6ADC8","border":"#585B70","primary":"#89B4FA","accent":"#CBA6F7",
-        "success":"#A6E3A1","warn":"#F9E2AF","error":"#F38BA8"
-    },
     "tokyo_night": {
         "bg":"#1A1B26","surface":"#292E42","surface_alt":"#2f3353","text":"#C0CAF5",
         "muted":"#9AA5CE","border":"#3B4261","primary":"#7AA2F7","accent":"#BB9AF7",
@@ -486,33 +499,30 @@ THEMES = {
         "muted":"#9097a3","border":"#5C6370","primary":"#61AFEF","accent":"#C678DD",
         "success":"#98C379","warn":"#E5C07B","error":"#E06C75"
     },
-    "material_indigo_light": {
-        "bg":"#FAFAFA","surface":"#FFFFFF","surface_alt":"#F5F5F5","text":"#212121",
-        "muted":"#757575","border":"#BDBDBD","primary":"#3F51B5","accent":"#E91E63",
-        "success":"#4CAF50","warn":"#FF9800","error":"#F44336"
-    },
-
         "high_contrast": {
         "bg":"#000000","surface":"#111111","surface_alt":"#1A1A1A","text":"#FFFFFF",
         "muted":"#BFBFBF","border":"#FFFFFF","primary":"#FFD400",  # focus/selection
         "accent":"#00B8FF","success":"#00E5A0","warn":"#FFB000","error":"#FF3B30"
     },
+    "cyberpunk_synthwave": {
+        "bg":"#1A002B","surface":"#24033A","surface_alt":"#2F0B4A","text":"#FCEFFF",
+        "muted":"#CAAEDF","border":"#4A2A6A","primary":"#00F0FF","accent":"#FF6BD6",  # neon pink
+        "success":"#89FFBF","warn":"#FFC857","error":"#FF5C8A"
+    },
 }
 
 # Human-friendly names -> keys (what shows in the dropdown)
 THEME_NAMES = {
-    "Light": "light",
     "Dark": "dark",
     "Solarized Light": "solarized_light",
     "Solarized Dark": "solarized_dark",
     "Nord": "nord",
     "Dracula": "dracula",
     "Gruvbox (Dark)": "gruvbox_dark",
-    "Catppuccin (Mocha)": "catppuccin_mocha",
     "Tokyo Night": "tokyo_night",
     "One Dark": "one_dark",
-    "Material (Indigo, Light)": "material_indigo_light",
     "High Contrast": "high_contrast",
+    "Cyberpunk": "cyberpunk_synthwave",
 }
 
 # Convenience: inverse map if you ever need to go from key -> label
@@ -619,16 +629,16 @@ class ImageViewerDialog(QDialog):
         v.setSpacing(8)
         for path in image_paths:
             if not os.path.exists(path):
-                lbl = QLabel(f"(Missing image) {path}")
-                lbl.setStyleSheet("color:#b00;font-style:italic;")
-                v.addWidget(lbl)
+                label = QLabel(f"(Missing image) {path}")
+                label.setStyleSheet("color:#b00;font-style:italic;")
+                v.addWidget(label)
                 continue
             pix = QPixmap(path)
-            img_label = QLabel()
-            img_label.setPixmap(pix)
-            img_label.setScaledContents(True)
-            img_label.setMinimumSize(QSize(400, min(500, pix.height())))
-            v.addWidget(img_label)
+            image_label = QLabel()
+            image_label.setPixmap(pix)
+            image_label.setScaledContents(True)
+            image_label.setMinimumSize(QSize(400, min(500, pix.height())))
+            v.addWidget(image_label)
             cap = QLabel(os.path.basename(path))
             cap.setAlignment(Qt.AlignmentFlag.AlignLeft)
             cap.setStyleSheet("color:#555;")
@@ -640,9 +650,9 @@ class ImageViewerDialog(QDialog):
         scroll.setWidget(container)
         row = QHBoxLayout()
         row.addStretch(1)
-        close_btn = QPushButton("Close")
-        close_btn.clicked.connect(self.accept)
-        row.addWidget(close_btn)
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(self.accept)
+        row.addWidget(close_button)
         outer.addLayout(row)
 
 
@@ -761,17 +771,17 @@ class ReviewPopup(QDialog):
                 f"explanation: {reason}\n"
             )
 
-            lbl = QLabel(text)
-            lbl.setWordWrap(True)
+            label = QLabel(text)
+            label.setWordWrap(True)
 
             if is_incorrect:
                 # Add a red ❌ marker and background highlight
-                lbl.setText(f"❌ {text}")
+                label.setText(f"❌ {text}")
             else:
                 # Mark correct answers with a subtle ✅
-                lbl.setText(f"✅ {text}")
+                label.setText(f"✅ {text}")
 
-            v.addWidget(lbl)
+            v.addWidget(label)
 
             line = QFrame()
             line.setFrameShape(QFrame.Shape.HLine)
@@ -783,10 +793,10 @@ class ReviewPopup(QDialog):
 
         # Footer row
         row = QHBoxLayout()
-        export_btn = QPushButton("Export .txt")
-        export_btn.clicked.connect(self._export_txt)
+        export_button = QPushButton("Export .txt")
+        export_button.clicked.connect(self._export_txt)
 
-        restart_btn = QPushButton("Restart")
+        restart_button = QPushButton("Restart")
         def _do_restart():
             if self._restart_callback:
                 try:
@@ -794,15 +804,15 @@ class ReviewPopup(QDialog):
                 except Exception as e:
                     QMessageBox.critical(self, "Restart failed", str(e))
             self.accept()
-        restart_btn.clicked.connect(_do_restart)
+        restart_button.clicked.connect(_do_restart)
 
-        close_btn = QPushButton("Close")
-        close_btn.clicked.connect(self.accept)
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(self.accept)
 
-        row.addWidget(export_btn)
+        row.addWidget(export_button)
         row.addStretch(1)
-        row.addWidget(restart_btn)
-        row.addWidget(close_btn)
+        row.addWidget(restart_button)
+        row.addWidget(close_button)
         outer.addLayout(row)
 
     def _export_txt(self):
@@ -871,14 +881,14 @@ class QuestionPopup(QDialog):
         for w in (self.repeat_cb, self.test_mode_cb, self.breaks_cb):
             outer.addWidget(w)
 
-        btns = QHBoxLayout()
-        btns.addStretch(1)
+        buttons = QHBoxLayout()
+        buttons.addStretch(1)
         ok = QPushButton("Start")
         cancel = QPushButton("Cancel")
         ok.clicked.connect(self.on_ok)
         cancel.clicked.connect(self.reject)
-        btns.addWidget(ok); btns.addWidget(cancel)
-        outer.addLayout(btns)
+        buttons.addWidget(ok); buttons.addWidget(cancel)
+        outer.addLayout(buttons)
 
     def _parse_timer(self, text: str) -> int:
         text = (text or "").strip()
@@ -945,9 +955,9 @@ class BreakDialog(QDialog):
 
         row = QHBoxLayout()
         row.addStretch(1)
-        self.end_btn = QPushButton("End Break Now")
-        self.end_btn.clicked.connect(self.accept)  # closes dialog
-        row.addWidget(self.end_btn)
+        self.end_button = QPushButton("End Break Now")
+        self.end_button.clicked.connect(self.accept)  # closes dialog
+        row.addWidget(self.end_button)
         v.addLayout(row)
 
         self._update_label()
@@ -1012,10 +1022,10 @@ class QuizMainWindow(QMainWindow):
         head = QHBoxLayout(); head.setSpacing(8)
         self.timer_label = QLabel("")
         self.timer_label.setStyleSheet("font-family: monospace; font-size: 18px;")
-        self.flag_btn = QPushButton("Flag")
-        self.flag_btn.setToolTip("Toggle flag for this question")
-        self.flag_btn.clicked.connect(self._toggle_flag)
-        self.flag_list_btn = QPushButton("Flagged…")
+        self.flag_button = QPushButton("Flag")
+        self.flag_button.setToolTip("Toggle flag for this question")
+        self.flag_button.clicked.connect(self._toggle_flag)
+        self.flag_list_button = QPushButton("Flagged…")
         
         # Theme picker (dropdown)
         self.theme_combo = QComboBox()
@@ -1035,7 +1045,7 @@ class QuizMainWindow(QMainWindow):
         self.theme_combo.setToolTip("Choose a theme")
         self.theme_combo.currentIndexChanged.connect(self._on_theme_changed)
 
-        # --- Mode badge (Practice vs Test) ---
+        # --- Mode badge (Study vs Test) ---
         self.mode_badge = QLabel()
         self.mode_badge.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.mode_badge.setStyleSheet(
@@ -1048,16 +1058,16 @@ class QuizMainWindow(QMainWindow):
                 "QLabel { background:#b00020; color:white; padding:3px 10px; border-radius:10px; font-weight:700; }"
             )
         else:
-            self.mode_badge.setText("PRACTICE MODE")
+            self.mode_badge.setText("STUDY MODE")
             self.mode_badge.setStyleSheet(
                 "QLabel { background:#0a7cff; color:white; padding:3px 10px; border-radius:10px; font-weight:700; }"
             )
 
-        self.flag_list_btn.clicked.connect(self._open_flag_list)
+        self.flag_list_button.clicked.connect(self._open_flag_list)
         head.addWidget(QLabel("Theme: ")); head.addWidget(self.theme_combo)
         head.addStretch(1); head.addWidget(self.timer_label)
         head.addSpacing(12); head.addWidget(self.mode_badge)
-        head.addSpacing(12); head.addWidget(self.flag_btn); head.addWidget(self.flag_list_btn)
+        head.addSpacing(12); head.addWidget(self.flag_button); head.addWidget(self.flag_list_button)
         root.addLayout(head)
 
         # Question
@@ -1096,8 +1106,8 @@ class QuizMainWindow(QMainWindow):
         # Actions row
         actions = QHBoxLayout()
         actions.setSpacing(8)
-        self.show_image_btn = QPushButton("Show Image")
-        self.show_image_btn.clicked.connect(self._show_image_for_current)
+        self.show_image_button = QPushButton("Show Image")
+        self.show_image_button.clicked.connect(self._show_image_for_current)
 
         # Image badge (clickable pill)
         self.image_badge = QLabel("Image available")
@@ -1124,34 +1134,34 @@ class QuizMainWindow(QMainWindow):
             self._show_image_for_current()
         self.image_badge.mousePressEvent = _open_image_from_badge
 
-        self.reason_btn = QPushButton("Why?")
-        self.reason_btn.setToolTip("Show explanation for the answer")
-        self.reason_btn.clicked.connect(self._show_reason_for_current)
-        self.calc_btn = QPushButton("Calculator")
-        self.calc_btn.clicked.connect(self._open_calculator)
-        self.check_btn = QPushButton("Check Answer")
-        self.check_btn.clicked.connect(self._check_current_answer)
-        self.break_btn = QPushButton("Take 15-min Break")
-        self.break_btn.clicked.connect(self._take_break)
-        actions.addWidget(self.show_image_btn)
+        self.reason_button = QPushButton("Why?")
+        self.reason_button.setToolTip("Show explanation for the answer")
+        self.reason_button.clicked.connect(self._show_reason_for_current)
+        self.calc_button = QPushButton("Calculator")
+        self.calc_button.clicked.connect(self._open_calculator)
+        self.check_button = QPushButton("Check Answer")
+        self.check_button.clicked.connect(self._check_current_answer)
+        self.break_button = QPushButton("Take 15-min Break")
+        self.break_button.clicked.connect(self._take_break)
+        actions.addWidget(self.show_image_button)
         actions.addWidget(self.image_badge)
-        actions.addWidget(self.reason_btn)
-        actions.addWidget(self.check_btn)
-        actions.addWidget(self.calc_btn)
+        actions.addWidget(self.reason_button)
+        actions.addWidget(self.check_button)
+        actions.addWidget(self.calc_button)
         actions.addStretch(1)
-        actions.addWidget(self.break_btn)
+        actions.addWidget(self.break_button)
         root.addLayout(actions)
 
         # Navigation
         nav = QHBoxLayout()
-        self.prev_btn = QPushButton("Previous"); self.prev_btn.clicked.connect(self._prev)
-        self.next_btn = QPushButton("Next"); self.next_btn.clicked.connect(self._next)
-        self.submit_btn = QPushButton("Submit"); self.submit_btn.clicked.connect(self._submit_current)
-        self._submit_base_text = self.submit_btn.text()
-        self._base_btn_style = self.submit_btn.styleSheet()  # often ""
-        self.finish_btn = QPushButton("Finish"); self.finish_btn.clicked.connect(self._finish)
-        nav.addWidget(self.prev_btn); nav.addWidget(self.next_btn)
-        nav.addStretch(1); nav.addWidget(self.submit_btn); nav.addWidget(self.finish_btn)
+        self.prev_button = QPushButton("Previous"); self.prev_button.clicked.connect(self._prev)
+        self.next_button = QPushButton("Next"); self.next_button.clicked.connect(self._next)
+        self.submit_button = QPushButton("Submit"); self.submit_button.clicked.connect(self._submit_current)
+        self._submit_base_text = self.submit_button.text()
+        self._base_button_style = self.submit_button.styleSheet()  # often ""
+        self.finish_button = QPushButton("Finish"); self.finish_button.clicked.connect(self._finish)
+        nav.addWidget(self.prev_button); nav.addWidget(self.next_button)
+        nav.addStretch(1); nav.addWidget(self.submit_button); nav.addWidget(self.finish_button)
         root.addLayout(nav)
 
         # Start timer if needed
@@ -1161,8 +1171,8 @@ class QuizMainWindow(QMainWindow):
 
         # Disable features in Test Mode
         if self.test_mode:
-            self.check_btn.setEnabled(False)
-            self.reason_btn.setEnabled(False)
+            self.check_button.setEnabled(False)
+            self.reason_button.setEnabled(False)
 
         # Break availability
         self._update_break_enabled()
@@ -1173,10 +1183,10 @@ class QuizMainWindow(QMainWindow):
         self._render_current_question()
 
     # ---- Helpers ----
-    def _toast(self, msg: str, ms: int = 1200):
+    def _toast(self, message: str, ms: int = 1200):
         if not hasattr(self, "_status"):
             self._status = self.statusBar()
-        self._status.showMessage(msg, ms)
+        self._status.showMessage(message, ms)
 
     def _toggle_theme(self):
         app = QApplication.instance()
@@ -1202,35 +1212,35 @@ class QuizMainWindow(QMainWindow):
         if hasattr(self, "flags") and self.current_index in self.flags:
             self._render_current_question()
 
-    def _flash_button(self, btn: QPushButton, ok: bool = True, ms: int = 900):
+    def _flash_button(self, button: QPushButton, ok: bool = True, ms: int = 900):
         # remember base text/style once, on the button itself
-        if btn.property("_base_text") is None:
-            btn.setProperty("_base_text", btn.text())
-        if btn.property("_base_style") is None:
-            btn.setProperty("_base_style", btn.styleSheet())
+        if button.property("_base_text") is None:
+            button.setProperty("_base_text", button.text())
+        if button.property("_base_style") is None:
+            button.setProperty("_base_style", button.styleSheet())
 
         # cancel an in-flight flash (if any)
-        t = btn.property("_flash_timer")
+        t = button.property("_flash_timer")
         if isinstance(t, QTimer):
             t.stop()
 
         # apply flash
-        btn.setText("✓ Saved" if ok else "Saved")
-        btn.setStyleSheet("background-color: #22aa55; color: white;")
+        button.setText("✓ Saved" if ok else "Saved")
+        button.setStyleSheet("background-color: #22aa55; color: white;")
 
         # start a fresh timer to revert
         timer = QTimer(self)
         timer.setSingleShot(True)
 
         def _revert():
-            base_text = btn.property("_base_text") or ""
-            base_style = btn.property("_base_style") or ""
-            btn.setText(base_text)
-            btn.setStyleSheet(base_style)
-            btn.setProperty("_flash_timer", None)
+            base_text = button.property("_base_text") or ""
+            base_style = button.property("_base_style") or ""
+            button.setText(base_text)
+            button.setStyleSheet(base_style)
+            button.setProperty("_flash_timer", None)
 
         timer.timeout.connect(_revert)
-        btn.setProperty("_flash_timer", timer)
+        button.setProperty("_flash_timer", timer)
         timer.start(ms)
 
 
@@ -1247,15 +1257,15 @@ class QuizMainWindow(QMainWindow):
         return random.sample(quiz_data, k=len(quiz_data))
     
 
-    def _reset_button(self, btn: QPushButton):
-        t = btn.property("_flash_timer")
+    def _reset_button(self, button: QPushButton):
+        t = button.property("_flash_timer")
         if isinstance(t, QTimer):
             t.stop()
-            btn.setProperty("_flash_timer", None)
-        base_text = btn.property("_base_text") or btn.text()
-        base_style = btn.property("_base_style") or ""
-        btn.setText(base_text)
-        btn.setStyleSheet(base_style)
+            button.setProperty("_flash_timer", None)
+        base_text = button.property("_base_text") or button.text()
+        base_style = button.property("_base_style") or ""
+        button.setText(base_text)
+        button.setStyleSheet(base_style)
 
 
 
@@ -1276,7 +1286,7 @@ class QuizMainWindow(QMainWindow):
             self._update_timer_label()
 
     def _update_break_enabled(self):
-        self.break_btn.setEnabled(bool(self.allow_breaks and (self.total_seconds > 0) and (not self.break_taken)))
+        self.break_button.setEnabled(bool(self.allow_breaks and (self.total_seconds > 0) and (not self.break_taken)))
 
     def _take_break(self):
         if self.break_taken or self.total_seconds <= 0 or not self.allow_breaks:
@@ -1297,8 +1307,8 @@ class QuizMainWindow(QMainWindow):
             self.timer.stop()
 
         # Show countdown dialog
-        dlg = BreakDialog(self, total_seconds=15 * 60)
-        dlg.exec()
+        dialog = BreakDialog(self, total_seconds=15 * 60)
+        dialog.exec()
 
         # Mark the one allowed break as used
         self.break_taken = True
@@ -1314,9 +1324,9 @@ class QuizMainWindow(QMainWindow):
         if not self.quiz:
             self.thumb_label.setVisible(False)
             return
-        img = self.quiz[self.current_index].get("image")
-        if img and os.path.exists(img):
-            pix = QPixmap(img)
+        image = self.quiz[self.current_index].get("image")
+        if image and os.path.exists(image):
+            pix = QPixmap(image)
             if not pix.isNull():
                 # scale keeping aspect ratio to the fixed height we set on the label
                 scaled = pix.scaledToHeight(self.thumb_label.height(), Qt.TransformationMode.SmoothTransformation)
@@ -1347,7 +1357,7 @@ class QuizMainWindow(QMainWindow):
         idx = self.current_index
         if idx in self.flags:
             self.flags.remove(idx)
-            self.flag_btn.setStyleSheet(
+            self.flag_button.setStyleSheet(
                 "QPushButton {"
                 " background-color: #b00020; color: white;"
                 " padding: 6px 12px; border-radius: 6px;"
@@ -1356,15 +1366,15 @@ class QuizMainWindow(QMainWindow):
             )
         else:
             self.flags.add(idx)
-            self.flag_btn.setStyleSheet("")
+            self.flag_button.setStyleSheet("")
         self._render_current_question()  # to update header indicator
 
     def _open_flag_list(self):
         if not self.flags:
             QMessageBox.information(self, "Flagged", "No flagged questions.")
             return
-        dlg = QDialog(self); dlg.setWindowTitle("Flagged Questions")
-        v = QVBoxLayout(dlg)
+        dialog = QDialog(self); dialog.setWindowTitle("Flagged Questions")
+        v = QVBoxLayout(dialog)
         lst = QListWidget()
         for i in sorted(self.flags):
             text = f"{i+1}. {self.quiz[i].get('question','')[:80]}"
@@ -1380,35 +1390,35 @@ class QuizMainWindow(QMainWindow):
             it = lst.currentItem()
             if not it: return
             self.current_index = it.data(Qt.ItemDataRole.UserRole)
-            dlg.accept(); self._render_current_question()
-        go.clicked.connect(_go); close.clicked.connect(dlg.reject)
-        dlg.exec()
+            dialog.accept(); self._render_current_question()
+        go.clicked.connect(_go); close.clicked.connect(dialog.reject)
+        dialog.exec()
 
     # ---- Rendering / selection ----
 
     def _make_radio_row(self, option_text: str, group: QButtonGroup) -> QWidget:
         row = QWidget(); row.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
         hl = QHBoxLayout(row); hl.setContentsMargins(0,0,0,0); hl.setSpacing(6)
-        btn = QRadioButton(); btn.setProperty("optionText", option_text); btn.setToolTip(option_text)
-        group.addButton(btn)
-        lbl = QLabel(option_text); lbl.setWordWrap(True)
-        lbl.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        lbl.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-        def click_label(_e): btn.click()
-        lbl.mousePressEvent = click_label
-        hl.addWidget(btn, 0, Qt.AlignmentFlag.AlignTop); hl.addWidget(lbl, 1)
+        button = QRadioButton(); button.setProperty("optionText", option_text); button.setToolTip(option_text)
+        group.addButton(button)
+        label = QLabel(option_text); label.setWordWrap(True)
+        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        def click_label(_e): button.click()
+        label.mousePressEvent = click_label
+        hl.addWidget(button, 0, Qt.AlignmentFlag.AlignTop); hl.addWidget(label, 1)
         return row
 
     def _make_check_row(self, option_text: str) -> Tuple[QCheckBox, QWidget]:
         row = QWidget(); row.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
         hl = QHBoxLayout(row); hl.setContentsMargins(0,0,0,0); hl.setSpacing(6)
         cb = QCheckBox(); cb.setProperty("optionText", option_text); cb.setToolTip(option_text)
-        lbl = QLabel(option_text); lbl.setWordWrap(True)
-        lbl.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        lbl.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+        label = QLabel(option_text); label.setWordWrap(True)
+        label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        label.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
         def click_label(_e): cb.toggle()
-        lbl.mousePressEvent = click_label
-        hl.addWidget(cb, 0, Qt.AlignmentFlag.AlignTop); hl.addWidget(lbl, 1)
+        label.mousePressEvent = click_label
+        hl.addWidget(cb, 0, Qt.AlignmentFlag.AlignTop); hl.addWidget(label, 1)
         return cb, row
 
     def _render_current_question(self):
@@ -1425,7 +1435,7 @@ class QuizMainWindow(QMainWindow):
         q = self.quiz[self.current_index]
         text = q.get("question","")
         multi = bool(q.get("multi", False))
-        has_img = bool(self.quiz[self.current_index].get("image"))
+        has_image = bool(self.quiz[self.current_index].get("image"))
         self.question_label.setText(f"{self.current_index+1}. {text}")
         # Update thumbnail (if any) for this question
         self._set_thumbnail_for_current()
@@ -1456,30 +1466,30 @@ class QuizMainWindow(QMainWindow):
                     
         # Keep flag button style in sync with current question
         if self.current_index in self.flags:
-            self.flag_btn.setStyleSheet(
+            self.flag_button.setStyleSheet(
                 "QPushButton { background-color: #b00020; color: white; padding: 6px 12px; border-radius: 6px; font-weight: 600; }"
                 "QPushButton:hover { background-color: #d32f2f; }"
             )
         else:
-            self.flag_btn.setStyleSheet("")
+            self.flag_button.setStyleSheet("")
         # Ensure Submit button is back to normal on each question render
         
-        self._reset_button(self.submit_btn)
-        self._reset_button(self.check_btn)
+        self._reset_button(self.submit_button)
+        self._reset_button(self.check_button)
         self.answers_scroll.verticalScrollBar().setValue(0)
         self._update_action_buttons_state()
 
     def _update_action_buttons_state(self):
-        has_img = False
+        has_image = False
         if self.quiz:
-            img = self.quiz[self.current_index].get("image")
-            has_img = bool(img and os.path.exists(img))
+            image = self.quiz[self.current_index].get("image")
+            has_image = bool(image and os.path.exists(image))
         # Enable/disable and colorize the Show Image button
-        self.show_image_btn.setEnabled(has_img)
-        self.show_image_btn.setText("Show Image")
-        if has_img:
+        self.show_image_button.setEnabled(has_image)
+        self.show_image_button.setText("Show Image")
+        if has_image:
             # Primary color when available
-            self.show_image_btn.setStyleSheet(
+            self.show_image_button.setStyleSheet(
                 "QPushButton {"
                 " background-color: #0a7cff; color: white;"
                 " padding: 6px 12px; border-radius: 6px;"
@@ -1487,7 +1497,7 @@ class QuizMainWindow(QMainWindow):
             )
         else:
             # Subtle/disabled look when no image
-            self.show_image_btn.setStyleSheet("")
+            self.show_image_button.setStyleSheet("")
 
 
     def _save_current_selection(self):
@@ -1503,8 +1513,8 @@ class QuizMainWindow(QMainWindow):
                     if text: chosen.add(text)
             self.user_answers[self.current_index] = chosen
         elif hasattr(self, "answer_group") and self.answer_group:
-            btn = self.answer_group.checkedButton()
-            self.user_answers[self.current_index] = btn.property("optionText") if btn else None
+            button = self.answer_group.checkedButton()
+            self.user_answers[self.current_index] = button.property("optionText") if button else None
 
     # ---- Actions ----
     def _submit_current(self):
@@ -1513,7 +1523,7 @@ class QuizMainWindow(QMainWindow):
         self._save_current_selection()
         # Neutral behavior in Test Mode; no correctness reveal
         self._toast("Answer saved.")
-        self._flash_button(self.submit_btn, ok=True)
+        self._flash_button(self.submit_button, ok=True)
 
         if self.test_mode:
             return
@@ -1533,7 +1543,7 @@ class QuizMainWindow(QMainWindow):
             is_correct = chosen in correct
 
         self._toast("Answer saved.")
-        self._flash_button(self.submit_btn, ok=is_correct)
+        self._flash_button(self.submit_button, ok=is_correct)
 
 
     def _check_current_answer(self):
@@ -1552,24 +1562,24 @@ class QuizMainWindow(QMainWindow):
         elif isinstance(chosen, str):
             is_correct = chosen in correct
         if is_correct:
-            self._flash_button(self.check_btn, ok=True, ms=900)
+            self._flash_button(self.check_button, ok=True, ms=900)
         else:
             # slight red flash
-            self.check_btn.setProperty("_base_text", self.check_btn.text())
-            self.check_btn.setProperty("_base_style", self.check_btn.styleSheet())
-            self.check_btn.setText("Not quite")
-            self.check_btn.setStyleSheet("background-color: #b00020; color: white;")
-            QTimer.singleShot(900, lambda: self._reset_button(self.check_btn))
+            self.check_button.setProperty("_base_text", self.check_button.text())
+            self.check_button.setProperty("_base_style", self.check_button.styleSheet())
+            self.check_button.setText("Not quite")
+            self.check_button.setStyleSheet("background-color: #b00020; color: white;")
+            QTimer.singleShot(900, lambda: self._reset_button(self.check_button))
 
-        msg = "Correct!" if is_correct else "Not quite."
-        self._toast(msg)
+        message = "Correct!" if is_correct else "Not quite."
+        self._toast(message)
 
     def _show_image_for_current(self):
         q = self.quiz[self.current_index]
-        img = q.get("image")
-        if img and os.path.exists(img):
-            dlg = ImageViewerDialog([img], parent=self, title="Question Image")
-            dlg.exec()
+        image = q.get("image")
+        if image and os.path.exists(image):
+            dialog = ImageViewerDialog([image], parent=self, title="Question Image")
+            dialog.exec()
         else:
             QMessageBox.information(self, "Image", "No image for this question.")
 
@@ -1578,17 +1588,18 @@ class QuizMainWindow(QMainWindow):
             return
         q = self.quiz[self.current_index]
         reason = q.get("explanation", "") or "No explanation provided."
-        img = q.get("image")
+        image = q.get("image")
         # simple dialog
-        dlg = QDialog(self); dlg.setWindowTitle("Explanation")
-        v = QVBoxLayout(dlg)
-        if img and os.path.exists(img):
-            pix = QPixmap(img); lbl_img = QLabel(); lbl_img.setPixmap(pix); lbl_img.setScaledContents(True); lbl_img.setMinimumHeight(min(240, pix.height()))
-            v.addWidget(lbl_img)
-        lbl = QLabel(reason); lbl.setWordWrap(True); v.addWidget(lbl)
-        row = QHBoxLayout(); row.addStretch(1); ok = QPushButton("Close"); ok.clicked.connect(dlg.accept); row.addWidget(ok)
+        dialog = QDialog(self); dialog.setWindowTitle("Explanation")
+        v = QVBoxLayout(dialog)
+        if image and os.path.exists(image):
+            pix = QPixmap(image); label_image = QLabel(); label_image.setPixmap(pix) 
+            label_image.setScaledContents(True); label_image.setMinimumHeight(min(240, pix.height()))
+            v.addWidget(label_image)
+        label = QLabel(reason); label.setWordWrap(True); v.addWidget(label)
+        row = QHBoxLayout(); row.addStretch(1); ok = QPushButton("Close"); ok.clicked.connect(dialog.accept); row.addWidget(ok)
         v.addLayout(row)
-        dlg.resize(640, 480); dlg.exec()
+        dialog.resize(640, 480); dialog.exec()
 
     def _open_calculator(self):
         CalculatorPopup(self).exec()
@@ -1643,14 +1654,14 @@ class QuizMainWindow(QMainWindow):
             new_win = QuizMainWindow(data, pptx_path=self.pptx_path, settings=settings)
             new_win.show()
 
-        dlg = ReviewPopup(
+        dialog = ReviewPopup(
             None,
             items,
             score_tuple,
             pptx_basename=(self.pptx_path or "review"),
             restart_callback=_restart
         )
-        dlg.exec()
+        dialog.exec()
 
 
     def _finish(self):
@@ -1694,17 +1705,17 @@ def start_with_settings_dialog(parent: Optional[QWidget],
     if not quiz_data:
         QMessageBox.warning(parent, "No Questions", "No questions were loaded.")
         return None
-    dlg = QuestionPopup(parent, max_questions=len(quiz_data))
-    if dlg.exec():
-        result = dlg.get_result()  # (count, timer_seconds, allow_repeats, test_mode, allow_breaks)
+    dialog = QuestionPopup(parent, max_questions=len(quiz_data))
+    if dialog.exec():
+        result = dialog.get_result()  # (count, timer_seconds, allow_repeats, test_mode, allow_breaks)
         if not result:
             return None
         count, timer_seconds, allow_repeats, test_mode, allow_breaks = result
         if return_settings:
             return (count, timer_seconds, allow_repeats, test_mode, allow_breaks)
-        w = QuizMainWindow(quiz_data, pptx_path=pptx_path, settings=result)
-        w.show()
-        return w
+        window = QuizMainWindow(quiz_data, pptx_path=pptx_path, settings=result)
+        window.show()
+        return window
     return None
 
 
@@ -1729,8 +1740,8 @@ def main_open_pptx_and_run():
         QMessageBox.warning(None, "No Questions", "Could not find any questions in that PPTX.")
         return
     # Start with settings
-    w = start_with_settings_dialog(None, quiz_data, pptx_path=pptx_basename)
-    if not w:
+    window = start_with_settings_dialog(None, quiz_data, pptx_path=pptx_basename)
+    if not window:
         return
     sys.exit(app.exec())
 
@@ -1738,10 +1749,10 @@ def main_open_pptx_and_run():
 def run_quiz_app(quiz_data: List[Dict], pptx_path: Optional[str] = None, *, timer_seconds: int = 0):
     app = QApplication(sys.argv)
     settings = (0, timer_seconds, True, False, True)  # defaults
-    w = QuizMainWindow(quiz_data, pptx_path=pptx_path, settings=settings)
+    window = QuizMainWindow(quiz_data, pptx_path=pptx_path, settings=settings)
     if timer_seconds and timer_seconds > 0:
-        w.timer.start(1000)
-    w.show()
+        window.timer.start(1000)
+    window.show()
     sys.exit(app.exec())
 
 

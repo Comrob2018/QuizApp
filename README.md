@@ -1,6 +1,6 @@
-# QuizApp v1.1.7
+# QuizApp v1.2.0
 
-A feature-rich quiz application built with **Python 3.13** and **PyQt6**, designed to run practice or test-style quizzes using PowerPoint slide decks (`.pptx`) as the question bank.
+A fast, keyboard-friendly quiz runner that builds questions from a PowerPoint (`.pptx`), supports images, multi‑select answers, timers & breaks, and now ships with a theme **dropdown** (Solarized, Nord, Dracula, etc.) plus a **High Contrast** theme for accessibility.
 
 ---
 - **Question Bank from PowerPoint**
@@ -36,7 +36,6 @@ A feature-rich quiz application built with **Python 3.13** and **PyQt6**, design
   - Submit saves answers (always neutral now).
   - Navigation with Next/Previous without reshuffling.
   - **Answer order randomized once** at quiz creation (stable during run).
-  - 
 
 - **Review Screen**
   - Accessible when clicking **Finish** (always clickable; warns if unanswered).
@@ -62,25 +61,51 @@ README.md        # This file
 ## 🚀 Usage
 
 ### Requirements
-- Python **3.13+**
-- Script will check for dependencies on its own at start
-
+- **Python**: 3.9+ (3.10+ recommended)  
+- **OS**: Windows, macOS, Linux  
+- **Python packages**:
+  - `PyQt6 >= 6.5.0`
+  - `python-pptx >= 0.6.21`
 
 ### Run
 ```bash
 python practice.py
 ```
+- You’ll be prompted to select a **.pptx** file.
+- The app applies your **saved theme** (via `QSettings`) at startup.  
+- Use the **Theme** dropdown in the header to switch themes at any time.
+  
+## Themes
 
-### Starting a Quiz
-1. Choose a `.pptx` file containing your question bank.
-2. Configure quiz settings (mode, timer, question count, repeats, etc.).
-3. Begin quiz.
+The app uses a **registry** of named themes (`THEMES`) and a display‑name map (`THEME_NAMES`).  
+Out of the box:
+
+- Light / Dark
+- Solarized Light / Solarized Dark
+- Nord, Dracula, Gruvbox (Dark), Catppuccin (Mocha), Tokyo Night, One Dark
+- Material (Indigo, Light)
+- **High Contrast** (color‑blind friendly; black bg, white text, bright yellow focus, blue accent)
+
+### Adding your own theme
+
+1. Add an entry to `THEMES`:
+   ```python
+   "my_theme": {
+     "bg":"#...", "surface":"#...", "surface_alt":"#...", "text":"#...",
+     "muted":"#...", "border":"#...", "primary":"#...", "accent":"#...",
+     "success":"#...", "warn":"#...", "error":"#..."
+   }
+   ```
+2. Add a user‑friendly label to `THEME_NAMES`:
+   ```python
+   "My Theme": "my_theme"
+   ```
+3. Relaunch → it appears in the dropdown automatically.
 
 ### Create a standalone app
 ```bash\windows\macOS
 pyinstaller --onefile --windowed --icon=ask.png .\practice.py
 ```
-
 ---
 
 ## 📝 Creating Questions in PowerPoint
@@ -101,6 +126,22 @@ pyinstaller --onefile --windowed --icon=ask.png .\practice.py
 
 ---
 
+## Version checking
+
+- On startup (and during the dependency preflight), the app fetches a **remote version** from a GitHub document and compares it with the local `VERSION` string.
+- If your version is behind, you’ll see this **popup**:
+
+> “Your version is not the latest version. For the latest version and features please download a new version from https://github.com/Comrob2018/QuizApp/tree/main”
+
+- Remote file (default):  
+  `https://raw.githubusercontent.com/Comrob2018/QuizApp/main/VERSION`  
+  (Change this URL in code if you store version metadata elsewhere.)
+
+### Offline behavior
+If the version file can’t be fetched (offline / rate limited), the app continues without warning or delay.
+
+---
+
 ## 📸 Screenshots
 
 - File Selector:
@@ -114,6 +155,9 @@ pyinstaller --onefile --windowed --icon=ask.png .\practice.py
 
 <img width="519" height="275" alt="image" src="https://github.com/user-attachments/assets/3fb29005-06d9-497c-a45b-076cb7a48528" />
 
+
+-There are multiple themes to choose from: "Light", "Dark", "Solarized Light", "Solarized Dark", "Nord", "Dracula", "Gruvbox (Dark)", "Catppuccin (Mocha)", "Tokyo Night", "One Dark", "Material (Indigo, Light)", and "High Contrast"
+}
 
 - Dark Mode:
 

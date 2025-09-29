@@ -35,7 +35,7 @@ import json
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 
-VERSION = "1.1.7"
+VERSION = "1.2.0"
 
 #---------------------------------
 #  Checking for required libraries
@@ -230,7 +230,7 @@ from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QLabel, QPushButton, QRadioButton,
     QVBoxLayout, QHBoxLayout, QGridLayout, QDialog, QMessageBox, QFileDialog,
     QScrollArea, QButtonGroup, QCheckBox, QLineEdit, QFrame, QSizePolicy,
-    QListWidget, QListWidgetItem,
+    QListWidget, QListWidgetItem, QComboBox,
 )
 from PyQt6.QtCore import Qt, QTimer, QSize, QSettings
 from PyQt6.QtGui import QPixmap
@@ -434,43 +434,171 @@ def build_quiz_from_pptx(pptx_path: str) -> Tuple[List[Dict], str]:
 #       --- THEME QSS ---
 # -----------------------------
 
-LIGHT_QSS = """
-QWidget { background: #e0e0e0; color: #111; }
-QLabel#Heading { font-size: 16px; font-weight: 600; }
-QPushButton {
-  padding: 6px 12px; border-radius: 6px; font-size: 13px;
-  background: #f2f2f2; color: #111;
-}
-QPushButton:hover { background: #e8e8e8; }
-QPushButton:disabled { background: #dcdcdc; color: #777; }
-QScrollArea { border: 1px solid #d8d8d8; border-radius: 8px; }
-QFrame[card="true"] { border: 1px solid #d8d8d8; border-radius: 10px; background:#fafafa; }
-"""
+THEMES = {
+    # your QSS-based palettes, expressed as tokens too
+    "light": {
+        "bg":"#e0e0e0","surface":"#f2f2f2","surface_alt":"#e8e8e8","text":"#111111",
+        "muted":"#777777","border":"#d8d8d8","primary":"#3F51B5","accent":"#E91E63",
+        "success":"#4CAF50","warn":"#FF9800","error":"#F44336"
+    },
+    "dark": {
+        "bg":"#1c1c1c","surface":"#2a2a2a","surface_alt":"#333333","text":"#eaeaea",
+        "muted":"#777777","border":"#2f2f2f","primary":"#7AA2F7","accent":"#BB9AF7",
+        "success":"#9ECE6A","warn":"#E0AF68","error":"#F7768E"
+    },
 
-DARK_QSS = """
-QWidget { background: #1c1c1c; color: #eaeaea; }
-QLabel#Heading { font-size: 16px; font-weight: 600; }
-QPushButton {
-  padding: 6px 12px; border-radius: 6px; font-size: 13px;
-  background: #2a2a2a; color: #f0f0f0;
-}
-QPushButton:hover { background: #333333; }
-QPushButton:disabled { background: #2a2a2a; color: #777; }
-QScrollArea { border: 1px solid #2f2f2f; border-radius: 8px; }
-QFrame[card="true"] { border: 1px solid #2f2f2f; border-radius: 10px; background:#242424; }
-"""
+    "solarized_light": {
+        "bg":"#fdf6e3","surface":"#eee8d5","surface_alt":"#e4ddc9","text":"#073642",
+        "muted":"#586e75","border":"#93a1a1","primary":"#268bd2","accent":"#6c71c4",
+        "success":"#859900","warn":"#b58900","error":"#dc322f"
+    },
+    "solarized_dark": {
+        "bg":"#002b36","surface":"#073642","surface_alt":"#0a3a46","text":"#eee8d5",
+        "muted":"#93a1a1","border":"#586e75","primary":"#268bd2","accent":"#6c71c4",
+        "success":"#859900","warn":"#b58900","error":"#dc322f"
+    },
+    "nord": {
+        "bg":"#2E3440","surface":"#3B4252","surface_alt":"#434C5E","text":"#ECEFF4",
+        "muted":"#D8DEE9","border":"#434C5E","primary":"#88C0D0","accent":"#5E81AC",
+        "success":"#A3BE8C","warn":"#EBCB8B","error":"#BF616A"
+    },
+    "dracula": {
+        "bg":"#282A36","surface":"#44475A","surface_alt":"#51546b","text":"#F8F8F2",
+        "muted":"#B6B6C6","border":"#6272A4","primary":"#BD93F9","accent":"#8BE9FD",
+        "success":"#50FA7B","warn":"#FFB86C","error":"#FF5555"
+    },
+    "gruvbox_dark": {
+        "bg":"#282828","surface":"#3C3836","surface_alt":"#504945","text":"#EBDBB2",
+        "muted":"#A89984","border":"#A89984","primary":"#83A598","accent":"#D3869B",
+        "success":"#B8BB26","warn":"#FABD2F","error":"#FB4934"
+    },
+    "catppuccin_mocha": {
+        "bg":"#1E1E2E","surface":"#313244","surface_alt":"#45475a","text":"#CDD6F4",
+        "muted":"#A6ADC8","border":"#585B70","primary":"#89B4FA","accent":"#CBA6F7",
+        "success":"#A6E3A1","warn":"#F9E2AF","error":"#F38BA8"
+    },
+    "tokyo_night": {
+        "bg":"#1A1B26","surface":"#292E42","surface_alt":"#2f3353","text":"#C0CAF5",
+        "muted":"#9AA5CE","border":"#3B4261","primary":"#7AA2F7","accent":"#BB9AF7",
+        "success":"#9ECE6A","warn":"#E0AF68","error":"#F7768E"
+    },
+    "one_dark": {
+        "bg":"#282C34","surface":"#3E4451","surface_alt":"#4b5261","text":"#ABB2BF",
+        "muted":"#9097a3","border":"#5C6370","primary":"#61AFEF","accent":"#C678DD",
+        "success":"#98C379","warn":"#E5C07B","error":"#E06C75"
+    },
+    "material_indigo_light": {
+        "bg":"#FAFAFA","surface":"#FFFFFF","surface_alt":"#F5F5F5","text":"#212121",
+        "muted":"#757575","border":"#BDBDBD","primary":"#3F51B5","accent":"#E91E63",
+        "success":"#4CAF50","warn":"#FF9800","error":"#F44336"
+    },
 
-def apply_theme(app: "QApplication", theme: str):
-    if theme == "dark":
-        app.setStyleSheet(DARK_QSS)
-    else:
-        app.setStyleSheet(LIGHT_QSS)
-    QSettings("YourOrg", "QuizApp").setValue("theme", theme)
+        "high_contrast": {
+        "bg":"#000000","surface":"#111111","surface_alt":"#1A1A1A","text":"#FFFFFF",
+        "muted":"#BFBFBF","border":"#FFFFFF","primary":"#FFD400",  # focus/selection
+        "accent":"#00B8FF","success":"#00E5A0","warn":"#FFB000","error":"#FF3B30"
+    },
+}
+
+# Human-friendly names -> keys (what you show in the dropdown)
+THEME_NAMES = {
+    "Light": "light",
+    "Dark": "dark",
+    "Solarized Light": "solarized_light",
+    "Solarized Dark": "solarized_dark",
+    "Nord": "nord",
+    "Dracula": "dracula",
+    "Gruvbox (Dark)": "gruvbox_dark",
+    "Catppuccin (Mocha)": "catppuccin_mocha",
+    "Tokyo Night": "tokyo_night",
+    "One Dark": "one_dark",
+    "Material (Indigo, Light)": "material_indigo_light",
+    "High Contrast": "high_contrast",
+}
+# Convenience: inverse map if you ever need to go from key -> label
+THEME_LABELS = {v: k for k, v in THEME_NAMES.items()}
+
+def _ideal_on(hex_color: str) -> str:
+    c = hex_color.lstrip("#")
+    r, g, b = int(c[0:2],16), int(c[2:4],16), int(c[4:6],16)
+    y = (0.2126*r + 0.7152*g + 0.0722*b)
+    return "#000000" if y > 186 else "#FFFFFF"
+
+def _build_stylesheet_from_theme(t: dict) -> str:
+    return f"""
+    QWidget {{
+        background-color: {t['bg']};
+        color: {t['text']};
+    }}
+    QLabel#Heading {{ font-size: 16px; font-weight: 600; }}
+    QFrame[card="true"], QFrame#Card, QLineEdit, QTextEdit, QPlainTextEdit, QListWidget {{
+        background-color: {t['surface']};
+        border: 1px solid {t['border']};
+        border-radius: 8px;
+    }}
+    QPushButton {{
+        background-color: {t['surface']};
+        border: 1px solid {t['border']};
+        border-radius: 10px;
+        padding: 6px 12px;
+        color: {t['text']};
+    }}
+    QPushButton:hover {{ background-color: {t['surface_alt']}; }}
+    QPushButton:disabled {{ color: {t['muted']}; }}
+    QPushButton#primary {{
+        background-color: {t['primary']};
+        color: {_ideal_on(t['primary'])};
+        border: none;
+    }}
+    QPushButton#danger {{
+        background-color: {t['error']};
+        color: {_ideal_on(t['error'])};
+        border: none;
+    }}
+    /* Strong keyboard focus rings for accessibility */
+    QPushButton:focus, QLineEdit:focus, QComboBox:focus, QListWidget:focus, QTextEdit:focus, QPlainTextEdit:focus {{
+        border: 2px solid {t['primary']};
+    }}
+    /* Improve selection visibility in lists/text */
+    QListWidget::item:selected {{
+        background: {t['primary']};
+        color: {_ideal_on(t['primary'])};
+    }}
+    """
+
+
+def apply_theme(app: "QApplication", theme_name: str):
+    # fallback if unknown
+    if theme_name not in THEMES:
+        theme_name = "light"
+    t = THEMES[theme_name]
+
+    # Palette for native widgets (selection colors, text, etc.)
+    from PyQt6.QtGui import QPalette, QColor
+    pal = QPalette()
+    pal.setColor(QPalette.ColorRole.Window, QColor(t["bg"]))
+    pal.setColor(QPalette.ColorRole.Base, QColor(t["surface"]))
+    pal.setColor(QPalette.ColorRole.AlternateBase, QColor(t["surface_alt"]))
+    pal.setColor(QPalette.ColorRole.WindowText, QColor(t["text"]))
+    pal.setColor(QPalette.ColorRole.Text, QColor(t["text"]))
+    pal.setColor(QPalette.ColorRole.Button, QColor(t["surface"]))
+    pal.setColor(QPalette.ColorRole.ButtonText, QColor(t["text"]))
+    pal.setColor(QPalette.ColorRole.Highlight, QColor(t["primary"]))
+    pal.setColor(QPalette.ColorRole.HighlightedText, QColor(_ideal_on(t["primary"])))
+    app.setPalette(pal)
+
+    # Stylesheet: build from tokens, then (for your legacy light/dark) append your QSS.
+    base_qss = _build_stylesheet_from_theme(t)
+    base_qss += f"""
+    QPushButton#primary {{ color: {_ideal_on(t['primary'])}; }}
+    QPushButton#danger  {{ color: {_ideal_on(t['error'])};  }}
+    """
+    app.setStyleSheet(base_qss)
+    QSettings("YourOrg", "QuizApp").setValue("theme", theme_name)
 
 def load_theme_pref() -> str:
     v = QSettings("YourOrg", "QuizApp").value("theme", "dark")
-    return v if v in ("light", "dark") else "light"
-
+    return v if isinstance(v, str) and v in THEMES else "dark"
 
 # -----------------------------
 # Dialogs: Image viewer, Calculator, Review, Settings
@@ -890,9 +1018,24 @@ class QuizMainWindow(QMainWindow):
         self.flag_btn.setToolTip("Toggle flag for this question")
         self.flag_btn.clicked.connect(self._toggle_flag)
         self.flag_list_btn = QPushButton("Flagged…")
-        self.theme_btn = QPushButton("🌓 Theme")
-        self.theme_btn.setToolTip("Toggle light/dark theme")
-        self.theme_btn.clicked.connect(self._toggle_theme)
+        
+        # Theme picker (dropdown)
+        self.theme_combo = QComboBox()
+        self.theme_combo.setEditable(False)
+        self.theme_combo.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+
+        # Populate with (label, key)
+        for label, key in sorted(THEME_NAMES.items(), key=lambda x: x[0].lower()):
+            self.theme_combo.addItem(label, userData=key)
+
+        current_key = load_theme_pref()
+        # Set visible label based on stored key
+        idx = self.theme_combo.findData(current_key)
+        if idx >= 0:
+            self.theme_combo.setCurrentIndex(idx)
+
+        self.theme_combo.setToolTip("Choose a theme")
+        self.theme_combo.currentIndexChanged.connect(self._on_theme_changed)
 
         # --- Mode badge (Practice vs Test) ---
         self.mode_badge = QLabel()
@@ -913,7 +1056,8 @@ class QuizMainWindow(QMainWindow):
             )
 
         self.flag_list_btn.clicked.connect(self._open_flag_list)
-        head.addWidget(self.theme_btn); head.addStretch(1); head.addWidget(self.timer_label)
+        head.addWidget(QLabel("Theme: ")); head.addWidget(self.theme_combo)
+        head.addStretch(1); head.addWidget(self.timer_label)
         head.addSpacing(12); head.addWidget(self.mode_badge)
         head.addSpacing(12); head.addWidget(self.flag_btn); head.addWidget(self.flag_list_btn)
         root.addLayout(head)
@@ -1047,6 +1191,17 @@ class QuizMainWindow(QMainWindow):
         # if you colorize flag button when flagged, also:
         if hasattr(self, "flags") and self.current_index in self.flags:
             # your existing flagged color override will re-run in _render_current_question
+            self._render_current_question()
+
+    def _on_theme_changed(self, index: int):
+        key = self.theme_combo.itemData(index)
+        if not key:
+            return
+        app = QApplication.instance()
+        apply_theme(app, key)
+        # keep your per-button overrides in sync
+        self._update_action_buttons_state()
+        if hasattr(self, "flags") and self.current_index in self.flags:
             self._render_current_question()
 
     def _flash_button(self, btn: QPushButton, ok: bool = True, ms: int = 900):

@@ -79,12 +79,12 @@ python practice.py
 
 The app uses a **registry** of named themes (`THEMES`) and a display‑name map (`THEME_NAMES`).  
 Out of the box:
-
-- Light / Dark
-- Solarized Light / Solarized Dark
-- Nord, Dracula, Gruvbox (Dark), Catppuccin (Mocha), Tokyo Night, One Dark
-- Material (Indigo, Light)
+- Dark
+- Solarized Dark
+- Nord, Gruvbox (Dark), Tokyo Night
 - **High Contrast** (color‑blind friendly; black bg, white text, bright yellow focus, blue accent)
+- Sapphire, Dark Rose, Crimson Ember
+- Cyberpunk, and Hacker Terminal.
 
 ### Adding your own theme
 
@@ -155,8 +155,6 @@ If the version file can’t be fetched (offline / rate limited), the app continu
 
 <img width="519" height="275" alt="image" src="https://github.com/user-attachments/assets/3fb29005-06d9-497c-a45b-076cb7a48528" />
 
-
--There are multiple themes to choose from: "Dark", "Solarized Dark", "Nord", "Gruvbox (Dark)", "Tokyo Night", "High Contrast", "Sapphire", "Crimson Ember", "Dark Rose", "Cyberpunk", and "Hacker Terminal"
 
 
 - Dark Mode:

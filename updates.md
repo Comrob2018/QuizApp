@@ -3,6 +3,7 @@ V 1.1.7
 
 V 1.1.6
 - Added light/dark mode toggle
+- will turn the test light or dark mode.
 
 V 1.1.5 
 - Check answer button functions like submit.

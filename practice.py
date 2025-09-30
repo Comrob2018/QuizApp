@@ -263,7 +263,7 @@ from PyQt6.QtWidgets import (
     QListWidget, QListWidgetItem, QComboBox,
 )
 from PyQt6.QtCore import Qt, QTimer, QSize, QSettings
-from PyQt6.QtGui import QPixmap
+from PyQt6.QtGui import QPixmap, QFont, QFontDatabase
 
 from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE_TYPE
@@ -463,70 +463,110 @@ def build_quiz_from_pptx(pptx_path: str) -> Tuple[List[Dict], str]:
 # -----------------------------
 
 THEMES = {
-    # your QSS-based palettes, expressed as tokens too
     "dark": {
-        "bg":"#1c1c1c","surface":"#2a2a2a","surface_alt":"#333333","text":"#eaeaea",
-        "muted":"#777777","border":"#2f2f2f","primary":"#7AA2F7","accent":"#BB9AF7",
-        "success":"#9ECE6A","warn":"#E0AF68","error":"#F7768E"
+        "bg": "#1c1c1c", "surface": "#2a2a2a", "surface_alt": "#333333", "text": "#eaeaea",
+        "muted": "#777777", "border": "#2f2f2f", "primary": "#7AA2F7", "accent": "#BB9AF7",
+        "success": "#9ECE6A", "warn": "#E0AF68", "error": "#F7768E"
     },
     "solarized_dark": {
-        "bg":"#002b36","surface":"#073642","surface_alt":"#0a3a46","text":"#eee8d5",
-        "muted":"#93a1a1","border":"#586e75","primary":"#268bd2","accent":"#6c71c4",
-        "success":"#859900","warn":"#b58900","error":"#dc322f"
+        "bg": "#002b36", "surface": "#073642", "surface_alt": "#0a3a46", "text": "#eee8d5",
+        "muted": "#93a1a1", "border": "#586e75", "primary": "#268bd2", "accent": "#6c71c4",
+        "success": "#859900", "warn": "#b58900", "error": "#dc322f"
     },
     "nord": {
-        "bg":"#2E3440","surface":"#3B4252","surface_alt":"#434C5E","text":"#ECEFF4",
-        "muted":"#D8DEE9","border":"#434C5E","primary":"#88C0D0","accent":"#5E81AC",
-        "success":"#A3BE8C","warn":"#EBCB8B","error":"#BF616A"
-    },
-    "dracula": {
-        "bg":"#282A36","surface":"#44475A","surface_alt":"#51546b","text":"#F8F8F2",
-        "muted":"#B6B6C6","border":"#6272A4","primary":"#BD93F9","accent":"#8BE9FD",
-        "success":"#50FA7B","warn":"#FFB86C","error":"#FF5555"
+        "bg": "#2E3440", "surface": "#3B4252", "surface_alt": "#434C5E", "text": "#ECEFF4",
+        "muted": "#D8DEE9", "border": "#434C5E", "primary": "#88C0D0", "accent": "#5E81AC",
+        "success": "#A3BE8C", "warn": "#EBCB8B", "error": "#BF616A"
     },
     "gruvbox_dark": {
-        "bg":"#282828","surface":"#3C3836","surface_alt":"#504945","text":"#EBDBB2",
-        "muted":"#A89984","border":"#A89984","primary":"#83A598","accent":"#D3869B",
-        "success":"#B8BB26","warn":"#FABD2F","error":"#FB4934"
+        "bg": "#282828", "surface": "#3C3836", "surface_alt": "#504945", "text": "#EBDBB2",
+        "muted": "#A89984", "border": "#A89984", "primary": "#83A598", "accent": "#D3869B",
+        "success": "#B8BB26", "warn": "#FABD2F", "error": "#FB4934"
     },
     "tokyo_night": {
-        "bg":"#1A1B26","surface":"#292E42","surface_alt":"#2f3353","text":"#C0CAF5",
-        "muted":"#9AA5CE","border":"#3B4261","primary":"#7AA2F7","accent":"#BB9AF7",
-        "success":"#9ECE6A","warn":"#E0AF68","error":"#F7768E"
+        "bg": "#1A1B26", "surface": "#292E42", "surface_alt": "#2f3353", "text": "#C0CAF5",
+        "muted": "#9AA5CE", "border": "#3B4261", "primary": "#7AA2F7", "accent": "#BB9AF7",
+        "success": "#9ECE6A", "warn": "#E0AF68", "error": "#F7768E"
     },
-    "one_dark": {
-        "bg":"#282C34","surface":"#3E4451","surface_alt":"#4b5261","text":"#ABB2BF",
-        "muted":"#9097a3","border":"#5C6370","primary":"#61AFEF","accent":"#C678DD",
-        "success":"#98C379","warn":"#E5C07B","error":"#E06C75"
+    "high_contrast": {
+        "bg": "#000000", "surface": "#111111", "surface_alt": "#1A1A1A", "text": "#FFFFFF",
+        "muted": "#BFBFBF", "border": "#FFFFFF", "primary": "#FFD400", "accent": "#00B8FF",
+        "success": "#00E5A0", "warn": "#FFB000", "error": "#FF3B30"
     },
-        "high_contrast": {
-        "bg":"#000000","surface":"#111111","surface_alt":"#1A1A1A","text":"#FFFFFF",
-        "muted":"#BFBFBF","border":"#FFFFFF","primary":"#FFD400",  # focus/selection
-        "accent":"#00B8FF","success":"#00E5A0","warn":"#FFB000","error":"#FF3B30"
+    "cyberpunk": {
+        "bg": "#1A002B", "surface": "#24033A", "surface_alt": "#2F0B4A", "text": "#FCEFFF",
+        "muted": "#CAAEDF", "border": "#4A2A6A", "primary": "#00F0FF", "accent": "#FF6BD6",
+        "success": "#89FFBF", "warn": "#FFC857", "error": "#FF5C8A"
     },
-    "cyberpunk_synthwave": {
-        "bg":"#1A002B","surface":"#24033A","surface_alt":"#2F0B4A","text":"#FCEFFF",
-        "muted":"#CAAEDF","border":"#4A2A6A","primary":"#00F0FF","accent":"#FF6BD6",  # neon pink
-        "success":"#89FFBF","warn":"#FFC857","error":"#FF5C8A"
+    "sapphire": {
+        "bg": "#162C45", "surface": "#353652", "surface_alt": "#4C334D", "text": "#F2F2F2",  
+        "muted": "#A9A4AF", "border": "#4C334D", "primary": "#053C5E", "accent": "#DB222A",  
+        "success": "#4CAF50", "warn": "#FF9800", "error": "#C32530",  
+    },
+    "crimson_ember": {
+        "bg": "#03071E", "surface": "#370617", "surface_alt": "#6A040F", "text": "#FFF6E5",  
+        "muted": "#CBBDAA", "border": "#9D0208", "primary": "#FFBA08", "accent": "#D00000",  
+        "success": "#4CAF50", "warn": "#F48C06", "error": "#D00000",  
+    },
+     "aurora_teal": {
+        "bg": "#0B1020", "surface": "#121A2B", "surface_alt": "#1A2338", "text": "#E8F6FF",
+        "muted": "#9FB3C8", "border": "#253352", "primary": "#2DD4BF", "accent": "#7C3AED",  
+        "success": "#22C55E", "warn": "#F59E0B", "error": "#EF4444",
+    },
+    "dark_rose": {
+        "bg": "#450A1B", "surface": "#800F2F", "surface_alt": "#A4133C", "text": "#FFF0F3", 
+        "muted": "#FF8FA3", "border": "#A4133C", "primary": "#FF758F", "accent": "#FF4D6D",
+        "success": "#4CAF50", "warn": "#FF9800", "error": "#C9184A",
+    },
+    "hacker_terminal": {
+        "bg": "#0A0F0A","surface": "#0F1A0F","surface_alt": "#152415","text": "#E8FFE8",
+        "muted": "#89A989","border": "#1E2F1E","primary": "#00FF7A","accent": "#00F0FF",
+        "success": "#00E676","warn": "#FFC857","error": "#FF4D6D",
     },
 }
 
 # Human-friendly names -> keys (what shows in the dropdown)
 THEME_NAMES = {
     "Dark": "dark",
-    "Solarized Light": "solarized_light",
     "Solarized Dark": "solarized_dark",
     "Nord": "nord",
-    "Dracula": "dracula",
     "Gruvbox (Dark)": "gruvbox_dark",
     "Tokyo Night": "tokyo_night",
-    "One Dark": "one_dark",
     "High Contrast": "high_contrast",
-    "Cyberpunk": "cyberpunk_synthwave",
+    "Cyberpunk": "cyberpunk",
+    "Sapphire": "sapphire",
+    "Crimson Ember": "crimson_ember",
+    "Aurora": "aurora_teal",
+    "Dark Rose": "dark_rose",
+    "Hacker Terminal": "hacker_terminal",
 }
 
 # Convenience: inverse map if you ever need to go from key -> label
 THEME_LABELS = {v: k for k, v in THEME_NAMES.items()}
+
+_TERMINAL_FONT_CANDIDATES = [
+    # nice modern monos first
+    "Cascadia Mono", "JetBrains Mono", "Fira Code", "IBM Plex Mono", "Hack",
+    # common system monos
+    "Consolas", "Menlo", "Monaco", "Lucida Console",
+    "Liberation Mono", "DejaVu Sans Mono", "Source Code Pro",
+]
+
+_DEFAULT_APP_FONT = None  # captured the first time apply_theme runs
+
+def _pick_first_available_font(candidates=_TERMINAL_FONT_CANDIDATES) -> str:
+    try:
+        # PyQt6: families() is a class method; no instance needed
+        installed = set(QFontDatabase.families())
+        for name in candidates:
+            if name in installed:
+                return name
+        # Reliable fallback to system fixed-width font
+        return QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont).family()
+    except Exception:
+        # Last-ditch fallback if called too early (before QApplication) or in odd envs
+        return "Monospace"
+
 
 def _ideal_on(hex_color: str) -> str:
     c = hex_color.lstrip("#")
@@ -565,19 +605,58 @@ def _build_stylesheet_from_theme(t: dict) -> str:
         color: {_ideal_on(t['error'])};
         border: none;
     }}
-    /* Strong keyboard focus rings for accessibility */
     QPushButton:focus, QLineEdit:focus, QComboBox:focus, QListWidget:focus, QTextEdit:focus, QPlainTextEdit:focus {{
         border: 2px solid {t['primary']};
     }}
-    /* Improve selection visibility in lists/text */
     QListWidget::item:selected {{
         background: {t['primary']};
         color: {_ideal_on(t['primary'])};
     }}
+    QCheckBox::indicator {{
+        width: 18px;
+        height: 18px;
+        border-radius: 4px;
+        border: 1px solid {t['border']};
+        background: {t['surface']};
+    }}
+    QCheckBox::indicator:hover {{
+        border-color: {t['primary']};
+    }}
+    QCheckBox::indicator:checked {{
+        background: {t['primary']};
+        border-color: {t['primary']};
+    }}
+    QCheckBox::indicator:indeterminate {{
+        background: {t['accent']};
+        border-color: {t['accent']};
+    }}
+    QRadioButton::indicator {{
+        width: 18px; height: 18px;
+        border-radius: 9px;
+        border: 1px solid {t['border']};
+        background: {t['surface']};
+    }}
+    QRadioButton::indicator:checked {{
+        background: {t['primary']};
+        border-color: {t['primary']};
+    }}
+    QLabel#MultiHint{{
+        font-size: 12px;
+        color: {t['muted']};
+        margin: 2px 0 6px 0;
+    }}
+    QLabel#ProgressLabel {{
+        font-size: 13px;
+        font-weight: 600;
+        color: {t['muted']};
+    }}
     """
 
-
 def apply_theme(app: "QApplication", theme_name: str):
+    global _DEFAULT_APP_FONT
+    if _DEFAULT_APP_FONT is None:
+        _DEFAULT_APP_FONT = app.font()
+
     # fallback if unknown
     if theme_name not in THEMES:
         theme_name = "tokyo_night"
@@ -599,6 +678,16 @@ def apply_theme(app: "QApplication", theme_name: str):
 
     # Stylesheet: build from tokens, then (for your legacy light/dark) append your QSS.
     base_qss = _build_stylesheet_from_theme(t)
+    # Hacker Terminal → switch to a classic monospace; restore for others
+    if theme_name == "hacker_terminal" or theme_name == "cyberpunk":
+        fam = _pick_first_available_font()
+        app.setFont(QFont(fam, 10))                   
+        base_qss += f'* {{ font-family: "{fam}"; }}\n' # enforce monospace everywhere
+    else:
+        if _DEFAULT_APP_FONT is not None:
+            app.setFont(_DEFAULT_APP_FONT)
+
+
     base_qss += f"""
     QPushButton#primary {{ color: {_ideal_on(t['primary'])}; }}
     QPushButton#danger  {{ color: {_ideal_on(t['error'])};  }}
@@ -861,7 +950,8 @@ class QuestionPopup(QDialog):
         outer.setContentsMargins(8,8,8,8)
 
         row1 = QHBoxLayout()
-        row1.addWidget(QLabel(f"Number of questions (0=all, up to {max_questions}, for >{max_questions} you have to allow repeat questions):"))
+        row1.addWidget(QLabel(f"""Number of questions (0=all, up to {max_questions}, 
+for >{max_questions} you have to allow repeat questions):"""))
         self.count_edit = QLineEdit("0")
         row1.addWidget(self.count_edit)
         outer.addLayout(row1)
@@ -874,11 +964,13 @@ class QuestionPopup(QDialog):
 
         self.repeat_cb = QCheckBox("Allow repeated questions")
         self.repeat_cb.setChecked(True)
+        self.allow_calc_cb = QCheckBox("Allow Calculator")
+        self.allow_calc_cb.setChecked(False)
         self.test_mode_cb = QCheckBox("Enable Test Mode (disables Check/Why during test)")
         self.test_mode_cb.setChecked(False)
         self.breaks_cb = QCheckBox("Allow a single 15-minute break (requires timer > 0)")
         self.breaks_cb.setChecked(True)
-        for w in (self.repeat_cb, self.test_mode_cb, self.breaks_cb):
+        for w in (self.repeat_cb, self.allow_calc_cb, self.test_mode_cb, self.breaks_cb):
             outer.addWidget(w)
 
         buttons = QHBoxLayout()
@@ -920,6 +1012,7 @@ class QuestionPopup(QDialog):
             n,
             timer_seconds,
             self.repeat_cb.isChecked(),
+            self.allow_calc_cb.isChecked(),
             self.test_mode_cb.isChecked(),
             self.breaks_cb.isChecked()
         )
@@ -990,13 +1083,15 @@ class QuizMainWindow(QMainWindow):
         self.break_taken = False
         self.test_mode = False
         self.allow_breaks = True
+        self.allow_calc = False
 
         # Apply settings
         count = 0; timer_seconds = 0; allow_repeats = True; test_mode = False; allow_breaks = True
         if settings:
-            count, timer_seconds, allow_repeats, test_mode, allow_breaks = settings
+            count, timer_seconds, allow_repeats, allow_calc, test_mode, allow_breaks = settings
         self.test_mode = bool(test_mode)
         self.allow_breaks = bool(allow_breaks)
+        self.allow_calc = bool(allow_calc)
 
         self.quiz = self._apply_quiz_settings(self.raw_quiz, count, allow_repeats)
         # Randomize the order of answers ONCE at quiz start
@@ -1005,7 +1100,7 @@ class QuizMainWindow(QMainWindow):
             if opts:
                 random.shuffle(opts)
         self.user_answers: List[Optional[Set[str] | str]] = [None] * len(self.quiz)
-        self.setWindowTitle("Quiz App (PyQt6)")
+        self.setWindowTitle("Quiz App")
         self.resize(980, 700)
 
         # Timer
@@ -1021,7 +1116,9 @@ class QuizMainWindow(QMainWindow):
         # Header
         head = QHBoxLayout(); head.setSpacing(8)
         self.timer_label = QLabel("")
-        self.timer_label.setStyleSheet("font-family: monospace; font-size: 18px;")
+        self.timer_label.setStyleSheet("font-weight: 600; font-size: 18px; letter-spacing: 1px;")
+        self.progress_label = QLabel("0/0")
+        self.progress_label.setStyleSheet("font-weight: 600; font-size: 18px; letter-spacing: 1px;")
         self.flag_button = QPushButton("Flag")
         self.flag_button.setToolTip("Toggle flag for this question")
         self.flag_button.clicked.connect(self._toggle_flag)
@@ -1137,8 +1234,9 @@ class QuizMainWindow(QMainWindow):
         self.reason_button = QPushButton("Why?")
         self.reason_button.setToolTip("Show explanation for the answer")
         self.reason_button.clicked.connect(self._show_reason_for_current)
-        self.calc_button = QPushButton("Calculator")
-        self.calc_button.clicked.connect(self._open_calculator)
+        if self.allow_calc:
+            self.calc_button = QPushButton("Calculator")
+            self.calc_button.clicked.connect(self._open_calculator)
         self.check_button = QPushButton("Check Answer")
         self.check_button.clicked.connect(self._check_current_answer)
         self.break_button = QPushButton("Take 15-min Break")
@@ -1147,7 +1245,8 @@ class QuizMainWindow(QMainWindow):
         actions.addWidget(self.image_badge)
         actions.addWidget(self.reason_button)
         actions.addWidget(self.check_button)
-        actions.addWidget(self.calc_button)
+        if self.allow_calc:
+            actions.addWidget(self.calc_button)
         actions.addStretch(1)
         actions.addWidget(self.break_button)
         root.addLayout(actions)
@@ -1183,15 +1282,18 @@ class QuizMainWindow(QMainWindow):
         self._render_current_question()
 
     # ---- Helpers ----
-    def _toast(self, message: str, ms: int = 1200):
-        if not hasattr(self, "_status"):
-            self._status = self.statusBar()
-        self._status.showMessage(message, ms)
+    def _update_progress_label(self):
+        try:
+            total = len(self.quiz)
+        except Exception:
+            total = 0
+        cur = (self.current_index + 1) if total else 0
+        self.progress_label.setText(f"{cur}/{total}")
 
     def _toggle_theme(self):
         app = QApplication.instance()
         current = load_theme_pref()
-        new_theme = "dark" if current == "light" else "light"
+        new_theme = "dark" if current == "tokyo_night" else "tokyo_night"
         apply_theme(app, new_theme)
 
         # reapply any per-button override colors (flag/image states)
@@ -1212,7 +1314,7 @@ class QuizMainWindow(QMainWindow):
         if hasattr(self, "flags") and self.current_index in self.flags:
             self._render_current_question()
 
-    def _flash_button(self, button: QPushButton, ok: bool = True, ms: int = 900):
+    def _flash_button(self, button: QPushButton, ok: bool = True, ms: int = 900, flash_code = "submit"):
         # remember base text/style once, on the button itself
         if button.property("_base_text") is None:
             button.setProperty("_base_text", button.text())
@@ -1224,9 +1326,15 @@ class QuizMainWindow(QMainWindow):
         if isinstance(t, QTimer):
             t.stop()
 
-        # apply flash
-        button.setText("✓ Saved" if ok else "Saved")
-        button.setStyleSheet("background-color: #22aa55; color: white;")
+        if flash_code == "submit":
+            button.setText("✓ Saved")
+            button.setStyleSheet("background-color: #9ACD32; color: black;")
+        elif flash_code == "check_not_quite":
+            button.setText("Not Quite!")
+            button.setStyleSheet("background-color: #FFBF00; color: black;")
+        elif flash_code == "cc":
+            button.setText("Correct!")
+            button.setStyleSheet("background-color: #9ACD32; color: black;")
 
         # start a fresh timer to revert
         timer = QTimer(self)
@@ -1344,12 +1452,14 @@ class QuizMainWindow(QMainWindow):
         if self.current_index > 0:
             self.current_index -= 1
             self._render_current_question()
+            self._update_progress_label()
 
     def _next(self):
         self._save_current_selection()
         if self.current_index < len(self.quiz) - 1:
             self.current_index += 1
             self._render_current_question()
+            self._update_progress_label()
 
     # ---- Flagging ----
 
@@ -1442,8 +1552,12 @@ class QuizMainWindow(QMainWindow):
 
         opts = q.get("options", []) or []
         if multi:
+            hint = QLabel("(Select all that apply)")
+            hint.setObjectName("MultiHint")
+            hint.setWordWrap(True)
             self.answer_group = None
             self.checkboxes: List[QCheckBox] = []
+            self.answers_layout.addWidget(hint, 0, Qt.AlignmentFlag.AlignTop)
             for opt in opts:
                 cb, row = self._make_check_row(opt)
                 self.checkboxes.append(cb)
@@ -1473,7 +1587,7 @@ class QuizMainWindow(QMainWindow):
         else:
             self.flag_button.setStyleSheet("")
         # Ensure Submit button is back to normal on each question render
-        
+        self._update_progress_label()
         self._reset_button(self.submit_button)
         self._reset_button(self.check_button)
         self.answers_scroll.verticalScrollBar().setValue(0)
@@ -1522,7 +1636,6 @@ class QuizMainWindow(QMainWindow):
             return
         self._save_current_selection()
         # Neutral behavior in Test Mode; no correctness reveal
-        self._toast("Answer saved.")
         self._flash_button(self.submit_button, ok=True)
 
         if self.test_mode:
@@ -1542,8 +1655,7 @@ class QuizMainWindow(QMainWindow):
         elif isinstance(chosen, str):
             is_correct = chosen in correct
 
-        self._toast("Answer saved.")
-        self._flash_button(self.submit_button, ok=is_correct)
+        self._flash_button(self.submit_button, ok=is_correct, flash_code="submit")
 
 
     def _check_current_answer(self):
@@ -1562,17 +1674,10 @@ class QuizMainWindow(QMainWindow):
         elif isinstance(chosen, str):
             is_correct = chosen in correct
         if is_correct:
-            self._flash_button(self.check_button, ok=True, ms=900)
+            self._flash_button(self.check_button, ok=True, ms=900, flash_code="check_current")
         else:
-            # slight red flash
-            self.check_button.setProperty("_base_text", self.check_button.text())
-            self.check_button.setProperty("_base_style", self.check_button.styleSheet())
-            self.check_button.setText("Not quite")
-            self.check_button.setStyleSheet("background-color: #b00020; color: white;")
-            QTimer.singleShot(900, lambda: self._reset_button(self.check_button))
+            self._flash_button(self.check_button, ok=True, ms=900, flash_code="check_not_quite")
 
-        message = "Correct!" if is_correct else "Not quite."
-        self._toast(message)
 
     def _show_image_for_current(self):
         q = self.quiz[self.current_index]
@@ -1707,12 +1812,12 @@ def start_with_settings_dialog(parent: Optional[QWidget],
         return None
     dialog = QuestionPopup(parent, max_questions=len(quiz_data))
     if dialog.exec():
-        result = dialog.get_result()  # (count, timer_seconds, allow_repeats, test_mode, allow_breaks)
+        result = dialog.get_result()  # (count, timer_seconds, allow_repeats, allow_calc, test_mode, allow_breaks)
         if not result:
             return None
-        count, timer_seconds, allow_repeats, test_mode, allow_breaks = result
+        count, timer_seconds, allow_repeats, allow_calc, test_mode, allow_breaks = result
         if return_settings:
-            return (count, timer_seconds, allow_repeats, test_mode, allow_breaks)
+            return (count, timer_seconds, allow_repeats, allow_calc, test_mode, allow_breaks)
         window = QuizMainWindow(quiz_data, pptx_path=pptx_path, settings=result)
         window.show()
         return window

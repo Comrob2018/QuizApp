@@ -160,28 +160,29 @@ If the version file can’t be fetched (offline / rate limited), the app continu
 - Dark Mode:
 
 
-<img width="975" height="693" alt="image" src="https://github.com/user-attachments/assets/a4227485-8617-46b0-8588-63ec8cfc7f4b" />
+<img width="974" height="733" alt="image" src="https://github.com/user-attachments/assets/a3013170-3b12-47b9-8118-f15f3e2c4295" />
 
 
 
 - Cyberpunk:
 
 
-<img width="978" height="694" alt="image" src="https://github.com/user-attachments/assets/958c7c23-f382-473b-9178-cec4b51dd52f" />
+<img width="976" height="721" alt="image" src="https://github.com/user-attachments/assets/62383662-9278-4b4c-bda6-7c39085057cf" />
 
 
 
 - Example quiz in **STUDY Mode**
 
 
-<img width="975" height="731" alt="image" src="https://github.com/user-attachments/assets/949b8f7e-ec16-4c6d-8d9b-c3c4344818bb" />
+<img width="974" height="733" alt="image" src="https://github.com/user-attachments/assets/9bcd8c8c-6119-47d9-928f-6897e4f08763" />
+
 
 
 
 - Example quiz in **Test Mode**
 
 
-<img width="975" height="727" alt="image" src="https://github.com/user-attachments/assets/e7838a37-66d3-4d4a-80ef-4eb8bad62939" />
+<img width="973" height="728" alt="image" src="https://github.com/user-attachments/assets/d408892e-b674-4d6c-a3cc-41f1ce504a90" />
 
 
 - Unanswered questions warning

@@ -1,3 +1,6 @@
+V 1.2.5
+- Changed settings popup for quality of life fixes
+
 V 1.2.4
 - Added question progress label at top of test area between timer and flag button
 

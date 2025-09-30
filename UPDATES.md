@@ -1,3 +1,9 @@
+V 1.2.3
+- Added calculator to settings and it will only display if Allow calculator is checked 
+
+V 1.2.2
+- Changed check answer and submit button functionality
+
 V 1.2.1
 - Added shorthand definitions to docstrings and changed the 
 

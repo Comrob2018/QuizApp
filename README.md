@@ -153,7 +153,7 @@ If the version file can’t be fetched (offline / rate limited), the app continu
 - Quiz Settings: (Will pull max number of questions from number of slides in the presentation)
 
 
-<img width="519" height="275" alt="image" src="https://github.com/user-attachments/assets/3fb29005-06d9-497c-a45b-076cb7a48528" />
+<img width="518" height="286" alt="image" src="https://github.com/user-attachments/assets/bc212c17-6d93-4540-8158-73f2deb9015d" />
 
 
 

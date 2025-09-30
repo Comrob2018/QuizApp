@@ -1,3 +1,6 @@
+V 1.2.6
+- Changed why and check answer buttons to not display in test mode
+
 V 1.2.5
 - Changed settings popup for quality of life fixes
 

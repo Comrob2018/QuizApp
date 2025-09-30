@@ -1,3 +1,6 @@
+V 1.2.4
+- Added question progress label at top of test area between timer and flag button
+
 V 1.2.3
 - Added calculator to settings and it will only display if Allow calculator is checked 
 

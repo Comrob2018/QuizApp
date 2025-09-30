@@ -171,16 +171,17 @@ If the version file can’t be fetched (offline / rate limited), the app continu
 
 
 
-- Example quiz in **Practice Mode**
+- Example quiz in **STUDY Mode**
 
-  
-<img width="977" height="696" alt="image" src="https://github.com/user-attachments/assets/1677193a-c386-4563-bac2-dc43e949829e" />
+
+<img width="975" height="731" alt="image" src="https://github.com/user-attachments/assets/949b8f7e-ec16-4c6d-8d9b-c3c4344818bb" />
+
 
 
 - Example quiz in **Test Mode**
 
 
-<img width="972" height="694" alt="image" src="https://github.com/user-attachments/assets/d89c2c68-aa33-4213-b9c9-ff3921dc3210" />
+<img width="975" height="727" alt="image" src="https://github.com/user-attachments/assets/e7838a37-66d3-4d4a-80ef-4eb8bad62939" />
 
 
 - Unanswered questions warning

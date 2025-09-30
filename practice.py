@@ -65,7 +65,7 @@ from typing import List, Dict, Set, Tuple, Optional, Callable
 import json
 from urllib.request import Request, urlopen
 
-VERSION = "1.2.4"
+VERSION = "1.2.5"
 
 #---------------------------------
 #  Checking for required libraries
@@ -175,7 +175,6 @@ def ensure_requirements() -> None:
 
     if not to_install:
         # Optional: print once for verbose mode
-        #print("✅ All dependencies satisfied.")
         pass
         
     else:
@@ -963,13 +962,13 @@ for >{max_questions} you have to allow repeat questions):"""))
 
         self.repeat_cb = QCheckBox("Allow repeated questions")
         self.repeat_cb.setChecked(True)
-        self.allow_calc_cb = QCheckBox("Allow Calculator")
+        self.allow_calc_cb = QCheckBox("Allow calculator")
         self.allow_calc_cb.setChecked(False)
         self.test_mode_cb = QCheckBox("Enable Test Mode (disables Check/Why during test)")
         self.test_mode_cb.setChecked(False)
-        self.breaks_cb = QCheckBox("Allow a single 15-minute break (requires timer > 0)")
+        self.breaks_cb = QCheckBox("Allow 15-minute break (requires timer > 0)")
         self.breaks_cb.setChecked(True)
-        for w in (self.repeat_cb, self.allow_calc_cb, self.test_mode_cb, self.breaks_cb):
+        for w in (self.test_mode_cb, self.breaks_cb, self.repeat_cb, self.allow_calc_cb):
             outer.addWidget(w)
 
         buttons = QHBoxLayout()
@@ -1161,8 +1160,8 @@ class QuizMainWindow(QMainWindow):
 
         self.flag_list_button.clicked.connect(self._open_flag_list)
         head.addWidget(QLabel("Theme: ")); head.addWidget(self.theme_combo)
-        head.addStretch(1); head.addWidget(self.timer_label); head.addSpacing(12); 
-        head.addWidget(self.progress_label); head.addSpacing(12); head.addWidget(self.mode_badge)
+        head.addWidget(self.progress_label); head.addSpacing(12); head.addStretch(1);  
+        head.addWidget(self.timer_label); head.addSpacing(12); head.addWidget(self.mode_badge)
         head.addSpacing(12); head.addWidget(self.flag_button); head.addWidget(self.flag_list_button)
         root.addLayout(head)
 
@@ -1287,7 +1286,7 @@ class QuizMainWindow(QMainWindow):
         except Exception:
             total = 0
         cur = (self.current_index + 1) if total else 0
-        self.progress_label.setText(f"{cur}/{total}")
+        self.progress_label.setText(f"Question {cur} of {total}")
 
     def _toggle_theme(self):
         app = QApplication.instance()

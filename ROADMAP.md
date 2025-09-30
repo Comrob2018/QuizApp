@@ -5,8 +5,7 @@ Major Updates
 3. Add testing modes for different certification bodies. (i.e. CompTIA, GIAC, AWS, PearsonVUE...)
    
 Minor Updates
-1. None
-2. 
+None
 
-Planned Patch
-1. None
+Planned Patches
+None

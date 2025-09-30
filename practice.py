@@ -66,7 +66,7 @@ import json
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 
-VERSION = "1.2.1"
+VERSION = "1.2.3"
 
 #---------------------------------
 #  Checking for required libraries

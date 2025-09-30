@@ -64,9 +64,8 @@ from typing import List, Dict, Set, Tuple, Optional, Callable
 
 import json
 from urllib.request import Request, urlopen
-from urllib.error import URLError, HTTPError
 
-VERSION = "1.2.3"
+VERSION = "1.2.4"
 
 #---------------------------------
 #  Checking for required libraries
@@ -1162,8 +1161,8 @@ class QuizMainWindow(QMainWindow):
 
         self.flag_list_button.clicked.connect(self._open_flag_list)
         head.addWidget(QLabel("Theme: ")); head.addWidget(self.theme_combo)
-        head.addStretch(1); head.addWidget(self.timer_label)
-        head.addSpacing(12); head.addWidget(self.mode_badge)
+        head.addStretch(1); head.addWidget(self.timer_label); head.addSpacing(12); 
+        head.addWidget(self.progress_label); head.addSpacing(12); head.addWidget(self.mode_badge)
         head.addSpacing(12); head.addWidget(self.flag_button); head.addWidget(self.flag_list_button)
         root.addLayout(head)
 
@@ -1376,7 +1375,6 @@ class QuizMainWindow(QMainWindow):
         button.setStyleSheet(base_style)
 
 
-
     # ---- Timer & Breaks ----
     def _update_timer_label(self):
         mm, ss = divmod(max(0, self.remaining_seconds), 60)
@@ -1505,7 +1503,6 @@ class QuizMainWindow(QMainWindow):
         dialog.exec()
 
     # ---- Rendering / selection ----
-
     def _make_radio_row(self, option_text: str, group: QButtonGroup) -> QWidget:
         row = QWidget(); row.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Maximum)
         hl = QHBoxLayout(row); hl.setContentsMargins(0,0,0,0); hl.setSpacing(6)

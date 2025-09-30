@@ -1,4 +1,4 @@
-# QuizApp v1.2.4
+# QuizApp v1.2.5
 
 A fast, keyboard-friendly quiz runner that builds questions from a PowerPoint (`.pptx`), supports images, multi‑select answers, timers & breaks, and now ships with a theme **dropdown** (Solarized, Nord, Dracula, etc.) plus a **High Contrast** theme for accessibility.
 
@@ -150,10 +150,10 @@ If the version file can’t be fetched (offline / rate limited), the app continu
 <img width="609" height="442" alt="image" src="https://github.com/user-attachments/assets/4138d9ce-58a7-4745-88a4-003329e018bf" />
 
 
-- Quiz Settings: (Will pull max number of questions from number of slides in the presentation)
+- Quiz Settings: (Set # of Questions, Timer length, Test mode, Allow for breaks, repeated questions, and calculator)
 
 
-<img width="518" height="286" alt="image" src="https://github.com/user-attachments/assets/bc212c17-6d93-4540-8158-73f2deb9015d" />
+<img width="514" height="284" alt="image" src="https://github.com/user-attachments/assets/b3178ad6-7e4a-4ae5-aadb-0d399280e367" />
 
 
 

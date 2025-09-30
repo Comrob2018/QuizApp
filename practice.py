@@ -65,7 +65,7 @@ from typing import List, Dict, Set, Tuple, Optional, Callable
 import json
 from urllib.request import Request, urlopen
 
-VERSION = "1.2.5"
+VERSION = "1.2.6"
 
 #---------------------------------
 #  Checking for required libraries
@@ -1232,17 +1232,17 @@ class QuizMainWindow(QMainWindow):
         self.reason_button = QPushButton("Why?")
         self.reason_button.setToolTip("Show explanation for the answer")
         self.reason_button.clicked.connect(self._show_reason_for_current)
-        if self.allow_calc:
-            self.calc_button = QPushButton("Calculator")
-            self.calc_button.clicked.connect(self._open_calculator)
+        self.calc_button = QPushButton("Calculator")
+        self.calc_button.clicked.connect(self._open_calculator)
         self.check_button = QPushButton("Check Answer")
         self.check_button.clicked.connect(self._check_current_answer)
         self.break_button = QPushButton("Take 15-min Break")
         self.break_button.clicked.connect(self._take_break)
         actions.addWidget(self.show_image_button)
         actions.addWidget(self.image_badge)
-        actions.addWidget(self.reason_button)
-        actions.addWidget(self.check_button)
+        if not self.test_mode:
+            actions.addWidget(self.reason_button)
+            actions.addWidget(self.check_button)
         if self.allow_calc:
             actions.addWidget(self.calc_button)
         actions.addStretch(1)

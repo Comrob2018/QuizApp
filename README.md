@@ -1,4 +1,4 @@
-# QuizApp v1.2.6
+# QuizApp v1.2.7
 
 A fast, keyboard-friendly quiz runner that builds questions from a PowerPoint (`.pptx`), supports images, multi‑select answers, timers & breaks, and now ships with a theme **dropdown** (Solarized, Nord, Dracula, etc.) plus a **High Contrast** theme for accessibility.
 
@@ -47,6 +47,11 @@ A fast, keyboard-friendly quiz runner that builds questions from a PowerPoint (`
   - Export review as plain text (`.txt`) with ✓/✗ markers per question.
   - Restart option that reopens the settings dialog.
 
+- **Hidden Buttons**
+- If buttons are unused they are hidden from the screen and will appear when needed.
+    - Show Image button and Thumbnail will only appear if there is an image
+    - Why/check answer buttons only appear in study mode.
+    - Break/calculator buttons only appear if those options are selected in settings
 ---
 
 ## 📂 Project Structure
@@ -171,7 +176,7 @@ If the version file can’t be fetched (offline / rate limited), the app continu
 
 
 
-- Example quiz in **STUDY Mode**
+- Example quiz in **STUDY MODE**
 
 
 <img width="974" height="733" alt="image" src="https://github.com/user-attachments/assets/9bcd8c8c-6119-47d9-928f-6897e4f08763" />
@@ -179,10 +184,11 @@ If the version file can’t be fetched (offline / rate limited), the app continu
 
 
 
-- Example quiz in **Test Mode**
+- Example quiz in **TEST MODE**
 
 
-<img width="973" height="728" alt="image" src="https://github.com/user-attachments/assets/d408892e-b674-4d6c-a3cc-41f1ce504a90" />
+<img width="976" height="698" alt="image" src="https://github.com/user-attachments/assets/31efb928-1d71-4fb3-bab9-b05c90e1db22" />
+
 
 
 - Unanswered questions warning

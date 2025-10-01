@@ -65,7 +65,7 @@ from typing import List, Dict, Set, Tuple, Optional, Callable
 import json
 from urllib.request import Request, urlopen
 
-VERSION = "1.2.6"
+VERSION = "1.2.7"
 
 #---------------------------------
 #  Checking for required libraries
@@ -961,13 +961,13 @@ for >{max_questions} you have to allow repeat questions):"""))
         outer.addLayout(row2)
 
         self.repeat_cb = QCheckBox("Allow repeated questions")
-        self.repeat_cb.setChecked(True)
+        self.repeat_cb.setChecked(False)
         self.allow_calc_cb = QCheckBox("Allow calculator")
         self.allow_calc_cb.setChecked(False)
         self.test_mode_cb = QCheckBox("Enable Test Mode (disables Check/Why during test)")
         self.test_mode_cb.setChecked(False)
         self.breaks_cb = QCheckBox("Allow 15-minute break (requires timer > 0)")
-        self.breaks_cb.setChecked(True)
+        self.breaks_cb.setChecked(False)
         for w in (self.test_mode_cb, self.breaks_cb, self.repeat_cb, self.allow_calc_cb):
             outer.addWidget(w)
 
@@ -1203,6 +1203,7 @@ class QuizMainWindow(QMainWindow):
         actions.setSpacing(8)
         self.show_image_button = QPushButton("Show Image")
         self.show_image_button.clicked.connect(self._show_image_for_current)
+        self.show_image_button.setVisible(False)
 
         # Image badge (clickable pill)
         self.image_badge = QLabel("Image available")
@@ -1246,7 +1247,8 @@ class QuizMainWindow(QMainWindow):
         if self.allow_calc:
             actions.addWidget(self.calc_button)
         actions.addStretch(1)
-        actions.addWidget(self.break_button)
+        if self.allow_breaks:
+            actions.addWidget(self.break_button)
         root.addLayout(actions)
 
         # Navigation
@@ -1599,6 +1601,7 @@ class QuizMainWindow(QMainWindow):
         self.show_image_button.setText("Show Image")
         if has_image:
             # Primary color when available
+            self.show_image_button.setVisible(True)
             self.show_image_button.setStyleSheet(
                 "QPushButton {"
                 " background-color: #0a7cff; color: white;"
@@ -1607,6 +1610,7 @@ class QuizMainWindow(QMainWindow):
             )
         else:
             # Subtle/disabled look when no image
+            self.show_image_button.setVisible(False)
             self.show_image_button.setStyleSheet("")
 
 

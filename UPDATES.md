@@ -1,3 +1,6 @@
+V 1.2.7
+- Updated button visiblity when not in use. (Break, Timer, Caluculator, Show Image) Buttons still function, they are just hidden when not in use.
+
 V 1.2.6
 - Changed why and check answer buttons to not display in test mode
 

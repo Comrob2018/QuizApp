@@ -1332,7 +1332,7 @@ class QuizMainWindow(QMainWindow):
         elif flash_code == "check_not_quite":
             button.setText("Not Quite!")
             button.setStyleSheet("background-color: #FFBF00; color: black;")
-        elif flash_code == "cc":
+        elif flash_code == "check_current":
             button.setText("Correct!")
             button.setStyleSheet("background-color: #9ACD32; color: black;")
 

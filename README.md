@@ -233,7 +233,7 @@ If the version file can’t be fetched (offline / rate limited), the app continu
 <img width="362" height="118" alt="image" src="https://github.com/user-attachments/assets/b964d9c8-3a27-427e-8c9e-0cee605a2828" />
 
 
-- Flagged questions popup
+- Flagged questions popup (click on the question and then click goto to go to that question)
 
 
 <img width="273" height="270" alt="image" src="https://github.com/user-attachments/assets/331b74db-a825-4bb2-a4ae-831aec43ba5d" />

@@ -1,4 +1,4 @@
-# QuizApp v1.2.7
+# QuizApp v1.3.0
 
 A fast, keyboard-friendly quiz runner that builds questions from a PowerPoint (`.pptx`), supports images, multi‑select answers, timers & breaks, and now ships with a theme **dropdown** (Solarized, Nord, Dracula, etc.) plus a **High Contrast** theme for accessibility.
 
@@ -61,16 +61,11 @@ practice.py    # Main application
 README.md        # This file
 ```
 
----
-
-## 🚀 Usage
-
 ### Requirements
-- **Python**: 3.9+ (3.10+ recommended)  
-- **OS**: Windows, macOS, Linux  
-- **Python packages**:
-  - `PyQt6 >= 6.5.0`
-  - `python-pptx >= 0.6.21`
+- Listed in requirements.txt
+```bash
+pip install -r requirements.txt
+```
 
 ### Run
 ```bash
@@ -81,7 +76,6 @@ python practice.py
 - Use the **Theme** dropdown in the header to switch themes at any time.
   
 ## Themes
-
 The app uses a **registry** of named themes (`THEMES`) and a display‑name map (`THEME_NAMES`).  
 Out of the box:
 - Dark

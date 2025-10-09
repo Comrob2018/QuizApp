@@ -120,13 +120,9 @@ python practice.py
 
 ## Themes
 The app uses a **registry** of named themes (`THEMES`) and a display‑name map (`THEME_NAMES`).  
-Out of the box:
-- Dark
-- Solarized Dark
-- Nord, Gruvbox (Dark), Tokyo Night
-- **High Contrast** (color‑blind friendly; black bg, white text, bright yellow focus, blue accent)
-- Sapphire, Dark Rose, Crimson Ember
-- Cyberpunk, and Hacker Terminal.
+Out of the box: 
+  Solarized, Hoth, Tokyo Night, High Contrast, Cyberpunk, Superman, Dark Rose,
+  H@(k3r_term!n41, Dathomir, Tatooine, Kashyyyk, Cloud City, Sith, Jedi, Crimson Dawn
 
 ### Adding your own theme
 

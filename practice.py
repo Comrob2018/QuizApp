@@ -73,7 +73,7 @@ from pptx import Presentation
 from pptx.enum.shapes import MSO_SHAPE_TYPE
 
 
-VERSION = "1.3.0"
+VERSION = "2.0.0"
 
 #---------------------------------
 #  Checking for required libraries

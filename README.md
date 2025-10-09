@@ -1,68 +1,121 @@
 # QuizApp v1.3.0
 
-A fast, keyboard-friendly quiz runner that builds questions from a PowerPoint (`.pptx`), supports images, multi‑select answers, timers & breaks, and now ships with a theme **dropdown** (Solarized, Nord, Dracula, etc.) plus a **High Contrast** theme for accessibility.
+A fast, keyboard-friendly quiz runner that builds questions from PowerPoint (`.pptx`), supports images, multi-select answers, timers & breaks, and now supports **.txt**, **.md**, and **.docx** formats as well. Includes a **theme dropdown** (Solarized, Nord, Dracula, etc.) and a **High Contrast** theme for accessibility.
 
 ---
-- **Question Bank from PowerPoint**
-  - Extracts questions, multiple choice/multi-select answers, explanations, and images from slide decks.
-  - Notes section in slides must contain the line:  
-    `Answer is: option1 | option2 ; option3`  
-    followed optionally by a line explaining the reason.
 
-- **Answer Types**
-  - Single choice (radio buttons).
-  - Multi-select (checkboxes) when multiple answers are correct.
+- **Question Bank from .docx, .md, .txt, or .pptx**
+  - Extracts questions, multiple choice/multi-select answers, explanations, and images from all supported formats.
+  - Automatically detects file type and parses accordingly.
+  - Flexible parsing recognizes headings, bullets, and labeled lines such as:
+    ```
+    Answer: A | C
+    Reason: Explanation text
+    ```
+  - Blank lines separate questions in text-based files.
 
-- **Images**
-  - Slide images automatically imported.
-  - Always-visible **Show Image** button (colorized blue when image is available).
-  - Click **Show Image** or Thumbnail to view image in a zoomable window.
-  - Thumbnail is shown below question text when an image exists.
+---
 
-- **Modes**
-  - **Practice Mode**: Check answers immediately, see reasons for each question.
-  - **Test Mode**: No feedback until the end.
-  - Visual **mode badge** in the header next to flag button/timer.
+## 🧠 Question Bank Formats
 
-- **Quiz Options**
-  - Choose number of questions (all or random subset).
-  - Allow repeat questions if you want more than the bank contains.
-  - Timer (set minutes, or 0 for untimed).
-  - One **15-minute break** available if timer is enabled.
-  - Flag questions and revisit flagged list.
-  - Integrated calculator.
+Your quiz app can now load question banks from multiple file types.
 
-- **Answer Handling**
-  - Submit saves answers (always neutral now).
-  - Navigation with Next/Previous without reshuffling.
-  - **Answer order randomized once** at quiz creation (stable during run).
+### ✅ Supported File Types
 
-- **Review Screen**
-  - Accessible when clicking **Finish** (always clickable; warns if unanswered).
-  - Shows:
-    - Score as **X/Y (Z%)** at the top.
-    - Each question with correct answer, your answer, and explanation.
-    - ✅ besides questions with correct answers.
-    - ❌ besides questions with incorrect answers.
-  - Export review as plain text (`.txt`) with ✓/✗ markers per question.
-  - Restart option that reopens the settings dialog.
+| Format | Description | Recommended Use |
+|---------|--------------|-----------------|
+| `.pptx` | PowerPoint slides | Visual question decks and training imports |
+| `.txt`  | Plain text | Quick editing and scripting |
+| `.md`   | Markdown | GitHub-friendly quizzes with clean syntax |
+| `.docx` | Word document | Authoring by non-technical users |
 
-- **Hidden Buttons**
-- If buttons are unused they are hidden from the screen and will appear when needed.
-    - Show Image button and Thumbnail will only appear if there is an image
-    - Why/check answer buttons only appear in study mode.
-    - Break/calculator buttons only appear if those options are selected in settings
+---
+
+### 🧾 Plain Text Example (`.txt`)
+```
+Q: What does the acronym "IDS" stand for?
+- Intrusion Detection System
+- Internal Data Service
+- Internet Delivery Software
+- Integrated Defense Strategy
+Answer: Intrusion Detection System
+Reason: IDS tools monitor network traffic for suspicious activities.
+```
+
+---
+
+### 📝 Markdown Example (`.md`)
+```markdown
+# Sample Cybersecurity Practice Test
+
+## What does the acronym "IDS" stand for?
+- Intrusion Detection System
+- Internal Data Service
+- Internet Delivery Software
+- Integrated Defense Strategy
+**Answer:** Intrusion Detection System  
+**Reason:** IDS tools monitor network traffic for suspicious activities.
+```
+
+Multiple correct answers can be written as:
+```markdown
+**Answer:** A | C
+```
+
+---
+
+### 🧮 Word Document Example (`.docx`)
+Each question uses a **Heading** for the prompt, bullet points for answers, and labeled lines for answer and reason.
+
+Example:
+```
+[Heading] What does the acronym "IDS" stand for?
+• Intrusion Detection System  
+• Internal Data Service  
+• Internet Delivery Software  
+• Integrated Defense Strategy  
+Answer: Intrusion Detection System  
+Reason: IDS tools monitor network traffic for suspicious activities.
+```
+
+---
+
+### 🖼 PowerPoint Example (`.pptx`)
+- Each **slide** = one question  
+- **Title** = question text  
+- **Bullets** = answer options  
+- **Notes section** may contain:
+  ```
+  Answer: A | C
+  Reason: Explanation or context.
+  ```
+- First slide image is automatically imported as the question image.
+
+---
+
+### ⚙️ How to Load
+When prompted to open a question bank file:
+1. Click **“Select Question Bank”**
+2. Choose any supported format (`.pptx`, `.txt`, `.md`, `.docx`)
+3. The app automatically detects and parses the file.
+
+---
+
+### 🧩 Tips for Authors
+- `.md`: Great for GitHub versioning and readability  
+- `.docx`: Ideal for collaborators without coding experience  
+- `.txt`: Best for quick drafts or command-line users  
+- `.pptx`: Perfect for training slides with visuals  
+
 ---
 
 ## 📂 Project Structure
-
 ```
-practice.py    # Main application
+practice.py      # Main application
 README.md        # This file
 ```
 
 ### Requirements
-- Listed in requirements.txt
 ```bash
 pip install -r requirements.txt
 ```
@@ -71,10 +124,12 @@ pip install -r requirements.txt
 ```bash
 python practice.py
 ```
-- You’ll be prompted to select a **.pptx** file.
+- You’ll be prompted to select a `.pptx`, `.txt`, `.md`, or `.docx` file.
 - The app applies your **saved theme** (via `QSettings`) at startup.  
-- Use the **Theme** dropdown in the header to switch themes at any time.
-  
+- Use the **Theme** dropdown in the header to switch themes.
+
+---
+
 ## Themes
 The app uses a **registry** of named themes (`THEMES`) and a display‑name map (`THEME_NAMES`).  
 Out of the box:
@@ -105,25 +160,10 @@ Out of the box:
 ```bash\windows\macOS
 pyinstaller --onefile --windowed --icon=ask.png .\practice.py
 ```
+
 ---
 
 ## 📝 Creating Questions in PowerPoint
-
-1. **Slides**:  
-   - First text box → Question text.  
-   - Subsequent text boxes or lines → Answer options.
-
-2. **Notes**:  
-   - First line must contain the correct answers:  
-     `Answer is: A | C`  
-     or  
-     `Answer is: AWS Shield ; AWS Shield Advanced`
-   - Next line (optional) → Explanation or reason.
-
-3. **Images**:  
-   - First image on a slide is imported and linked to the question.
-
----
 
 ## Version checking
 

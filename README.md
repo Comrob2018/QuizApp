@@ -1,18 +1,6 @@
 # QuizApp v1.3.0
 
-A fast, keyboard-friendly quiz runner that builds questions from PowerPoint (`.pptx`), supports images, multi-select answers, timers & breaks, and now supports **.txt**, **.md**, and **.docx** formats as well. Includes a **theme dropdown** (Solarized, Nord, Dracula, etc.) and a **High Contrast** theme for accessibility.
-
----
-
-- **Question Bank from .docx, .md, .txt, or .pptx**
-  - Extracts questions, multiple choice/multi-select answers, explanations, and images from all supported formats.
-  - Automatically detects file type and parses accordingly.
-  - Flexible parsing recognizes headings, bullets, and labeled lines such as:
-    ```
-    Answer: A | C
-    Reason: Explanation text
-    ```
-  - Blank lines separate questions in text-based files.
+A fast, keyboard-friendly quiz runner that builds questions from a question bank(now supports: .txt, .md, .docx, and .pptx), supports images, multi-select answers, timers & breaks. Includes a **theme dropdown** (Solarized, Nord, Dracula, etc.) and a **High Contrast** theme for accessibility.
 
 ---
 

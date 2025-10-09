@@ -51,25 +51,33 @@ Capabilities:
 | `_e`       | Throwaway **event object** in mouse handlers.                                    |
 
 """
-
-from __future__ import annotations
-
 import os
 import re
 import sys
 import random
-import subprocess
+import docx
+import json
+from pathlib import Path
 from dataclasses import dataclass
 from typing import List, Dict, Set, Tuple, Optional, Callable
-
-import json
 from urllib.request import Request, urlopen
+from PyQt6.QtWidgets import (
+    QApplication, QMainWindow, QWidget, QLabel, QPushButton, QRadioButton,
+    QVBoxLayout, QHBoxLayout, QGridLayout, QDialog, QMessageBox, QFileDialog,
+    QScrollArea, QButtonGroup, QCheckBox, QLineEdit, QFrame, QSizePolicy,
+    QListWidget, QListWidgetItem, QComboBox,
+)
+from PyQt6.QtCore import Qt, QTimer, QSize, QSettings, QUrl
+from PyQt6.QtGui import QPixmap, QFont, QFontDatabase, QDesktopServices
+from pptx import Presentation
+from pptx.enum.shapes import MSO_SHAPE_TYPE
+
 
 VERSION = "1.3.0"
 
-#--------------------------------
-#  Version checking with Github
-#--------------------------------
+#---------------------------------
+#  Checking for required libraries
+#---------------------------------
 
 try:
     from importlib.metadata import version, PackageNotFoundError  # Python 3.8+
@@ -96,14 +104,6 @@ def _force_popup_update_warning(download_page_url: str, parent=None) -> None:
     Always show a QMessageBox warning. If no QApplication exists yet,
     create a temporary one just for this modal dialog.
     """
-    try:
-        from PyQt6.QtWidgets import QApplication, QMessageBox
-        from PyQt6.QtGui import QDesktopServices
-        from PyQt6.QtCore import QUrl
-    except Exception:
-        # If PyQt isn't available for some reason, silently return.
-        return
-
     app_created = False
     app = QApplication.instance()
     if app is None:
@@ -231,18 +231,6 @@ def check_for_update() -> None:
         # Swallow any network/parse errors to avoid blocking startup.
         pass
 
-from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QLabel, QPushButton, QRadioButton,
-    QVBoxLayout, QHBoxLayout, QGridLayout, QDialog, QMessageBox, QFileDialog,
-    QScrollArea, QButtonGroup, QCheckBox, QLineEdit, QFrame, QSizePolicy,
-    QListWidget, QListWidgetItem, QComboBox,
-)
-from PyQt6.QtCore import Qt, QTimer, QSize, QSettings
-from PyQt6.QtGui import QPixmap, QFont, QFontDatabase
-
-from pptx import Presentation
-from pptx.enum.shapes import MSO_SHAPE_TYPE
-
 # -----------------------------
 # Data model
 # -----------------------------
@@ -288,7 +276,6 @@ def normalize_quiz_records(raw_items: List[Dict]) -> List[Dict]:
             "multi": multi
         })
     return normalized
-
 
 # -----------------------------
 # PPTX parser (notes-driven answers)
@@ -428,11 +415,258 @@ def extract_images_and_prepare_quiz(pptx_path: str, out_dir: Optional[str] = Non
 
     return normalize_quiz_records(quiz_items)
 
-
 def build_quiz_from_pptx(pptx_path: str) -> Tuple[List[Dict], str]:
     data = extract_images_and_prepare_quiz(pptx_path)
     return data, pptx_path
 
+# -----------------------------
+# Plain-text / Markdown / DOCX parsers
+# -----------------------------
+
+_TX_OPT_RE = re.compile(r"""^\s*(?:[\-\*\u2022]|[A-Za-z]\)|[A-Za-z]\.|[0-9]+\.)\s*(.+)$""")
+_TX_KEYVAL_RE = re.compile(r"^\s*(Answer|Answers|Correct|Reason|Explanation|Image)\s*:\s*(.+)$", re.I)
+_SPLIT_ANS = re.compile(r"\s*[;|,]\s*")
+
+def _finish_block(acc_q, acc_opts, acc_ans, acc_reason, acc_img) -> Optional[Dict]:
+    q = (acc_q or "").strip()
+    if not q:
+        return None
+    opts = [o.strip() for o in acc_opts if o.strip()]
+    # Map letter answers to option text if letters present
+    ans_tokens = {a.strip() for a in acc_ans if a.strip()}
+    # If the file provided letters, try to map to option strings
+    mapped = set()
+    letter_map = {chr(ord('A')+i): opt for i, opt in enumerate(opts)}
+    lowopts = [(o, o.lower()) for o in opts]
+    for tok in ans_tokens:
+        key = tok.upper()
+        if key in letter_map:
+            mapped.add(letter_map[key]); continue
+        tl = tok.lower()
+        exact = next((o for o, lo in lowopts if lo == tl), None)
+        if exact:
+            mapped.add(exact); continue
+        sub = next((o for o, lo in lowopts if tl in lo or lo in tl), None)
+        if sub:
+            mapped.add(sub)
+    return {
+        "question": q,
+        "options": opts,
+        "answer": mapped,
+        "explanation": acc_reason.strip(),
+        "image": acc_img or None,
+        "multi": len(mapped) > 1
+    }
+
+def build_quiz_from_txt(txt_path: str) -> Tuple[List[Dict], str]:
+    """
+    Text format (flexible):
+      Q: Question text
+      - Option A
+      - Option B
+      Answer: A | B    (letters or full option text; separators: | ; ,)
+      Reason: Optional explanation
+      Image:  /path/to/image.png
+    Blank line separates questions. Lines starting with '-', '*', bullets,
+    or 'A)', 'A.', '1.' are treated as options.
+    """
+    blocks = []
+    with open(txt_path, "r", encoding="utf-8", errors="replace") as f:
+        lines = f.read().splitlines()
+
+    acc_q = ""
+    acc_opts: List[str] = []
+    acc_ans: List[str] = []
+    acc_reason = ""
+    acc_img = None
+
+    def _push():
+        item = _finish_block(acc_q, acc_opts, acc_ans, acc_reason, acc_img)
+        if item: blocks.append(item)
+
+    for raw in lines + [""]:  # ensure last block flushes
+        line = raw.rstrip("\n")
+        if not line.strip():
+            _push()
+            acc_q, acc_opts, acc_ans, acc_reason, acc_img = "", [], [], "", None
+            continue
+
+        # Key-value lines first
+        m = _TX_KEYVAL_RE.match(line)
+        if m:
+            key = m.group(1).lower()
+            val = m.group(2).strip()
+            if key in ("answer","answers","correct"):
+                acc_ans.extend([t for t in _SPLIT_ANS.split(val) if t])
+            elif key in ("reason","explanation"):
+                acc_reason = val
+            elif key == "image":
+                acc_img = val
+            continue
+
+        # Option line?
+        m = _TX_OPT_RE.match(line)
+        if m:
+            acc_opts.append(m.group(1))
+            continue
+
+        # If we have no question yet, first non-empty non-meta is the question.
+        if not acc_q:
+            # Strip leading "Q:" if present
+            acc_q = re.sub(r"^\s*(Q|Question)\s*:\s*", "", line, flags=re.I)
+        else:
+            # Continuation of question (multi-line question support)
+            acc_q += " " + line.strip()
+
+    return normalize_quiz_records(blocks), txt_path
+
+def build_quiz_from_md(md_path: str) -> Tuple[List[Dict], str]:
+    """
+    Markdown conventions supported:
+      # Question text
+      - Option A
+      - Option B
+      **Answer:** A | B
+      **Reason:** Optional text
+      **Image:**  path.png
+    Also supports plain 'Answer:' without bold and ordered lists for options.
+    """
+    with open(md_path, "r", encoding="utf-8", errors="replace") as f:
+        text = f.read()
+
+    lines = text.splitlines()
+    blocks = []
+
+    acc_q = ""
+    acc_opts: List[str] = []
+    acc_ans: List[str] = []
+    acc_reason = ""
+    acc_img = None
+
+    def _push():
+        item = _finish_block(acc_q, acc_opts, acc_ans, acc_reason, acc_img)
+        if item: blocks.append(item)
+
+    def _kv(line: str) -> Optional[Tuple[str,str]]:
+        # **Answer:** foo  OR  Answer: foo
+        m = re.match(r"^\s*(?:\*\*)?\s*(Answer|Answers|Correct|Reason|Explanation|Image)\s*:?(\*\*)?\s*(.+)$", line, flags=re.I)
+        if m:
+            return m.group(1).lower(), m.group(3).strip()
+        return None
+
+    for raw in lines + ["# "]:  # sentinel heading to flush final block
+        line = raw.rstrip("\n")
+        if re.match(r"^\s*#{1,6}\s+.+", line):  # heading => new question
+            # flush previous
+            if acc_q or acc_opts or acc_ans or acc_reason or acc_img:
+                _push()
+                acc_q, acc_opts, acc_ans, acc_reason, acc_img = "", [], [], "", None
+            # new question text (strip leading hashes)
+            acc_q = re.sub(r"^\s*#{1,6}\s+", "", line).strip()
+            continue
+
+        m = _kv(line)
+        if m:
+            key, val = m
+            if key in ("answer","answers","correct"):
+                acc_ans.extend([t for t in _SPLIT_ANS.split(val) if t])
+            elif key in ("reason","explanation"):
+                acc_reason = val
+            elif key == "image":
+                acc_img = val
+            continue
+
+        # Options: list item lines
+        m = _TX_OPT_RE.match(line)
+        if m:
+            acc_opts.append(m.group(1))
+            continue
+
+        # Non-key stuff underneath a heading but before options = question continuation
+        if acc_q and line.strip():
+            acc_q += " " + line.strip()
+
+    return normalize_quiz_records(blocks), md_path
+
+def build_quiz_from_docx(docx_path: str) -> Tuple[List[Dict], str]:
+    """
+    DOCX conventions supported:
+      Paragraph in Heading style -> Question
+      Bullet/numbered list items -> Options
+      Paragraphs like 'Answer: ...', 'Reason: ...', 'Image: ...' -> metadata
+    """
+    if docx is None:
+        raise RuntimeError("python-docx is required for .docx parsing. Install with: pip install python-docx")
+
+    document = docx.Document(docx_path)
+
+    blocks = []
+    acc_q = ""
+    acc_opts: List[str] = []
+    acc_ans: List[str] = []
+    acc_reason = ""
+    acc_img = None
+
+    def _push():
+        item = _finish_block(acc_q, acc_opts, acc_ans, acc_reason, acc_img)
+        if item: blocks.append(item)
+
+    def _is_heading(p):
+        try:
+            return p.style and p.style.name and "Heading" in p.style.name
+        except Exception:
+            return False
+
+    for p in document.paragraphs + [document.add_paragraph("HEADING_SENTINEL")]:
+        text = (p.text or "").strip()
+
+        if _is_heading(p) or text == "HEADING_SENTINEL":
+            if acc_q or acc_opts or acc_ans or acc_reason or acc_img:
+                _push()
+                acc_q, acc_opts, acc_ans, acc_reason, acc_img = "", [], [], "", None
+            if text != "HEADING_SENTINEL":
+                acc_q = text
+            continue
+
+        # List item => option (python-docx doesn't expose bullets easily; use style or leading chars heuristics)
+        if (getattr(p.style, "name", "") or "").lower().startswith(("list","bullet","number")) or _TX_OPT_RE.match(text):
+            m = _TX_OPT_RE.match(text)
+            acc_opts.append(m.group(1) if m else text)
+            continue
+
+        # Key-values
+        m = _TX_KEYVAL_RE.match(text)
+        if m:
+            key = m.group(1).lower()
+            val = m.group(2).strip()
+            if key in ("answer","answers","correct"):
+                acc_ans.extend([t for t in _SPLIT_ANS.split(val) if t])
+            elif key in ("reason","explanation"):
+                acc_reason = val
+            elif key == "image":
+                acc_img = val
+            continue
+
+        # Question continuation
+        if text:
+            if acc_q:
+                acc_q += " " + text
+            else:
+                acc_q = text
+
+    return normalize_quiz_records(blocks), docx_path
+
+def build_quiz_from_path(path: str) -> Tuple[List[Dict], str]:
+    ext = Path(path).suffix.lower()
+    if ext == ".pptx":
+        return build_quiz_from_pptx(path)
+    if ext == ".txt":
+        return build_quiz_from_txt(path)
+    if ext == ".md":
+        return build_quiz_from_md(path)
+    if ext == ".docx":
+        return build_quiz_from_docx(path)
+    raise ValueError(f"Unsupported file type: {ext}")
 # -----------------------------
 #       --- THEME QSS ---
 # -----------------------------
@@ -1826,26 +2060,30 @@ def start_with_settings_dialog(parent: Optional[QWidget],
 
 def main_open_pptx_and_run():
     app = QApplication(sys.argv)
-    # Base theme for all QPushButtons and labels
     apply_theme(app, load_theme_pref())
 
-    # Ask for PPTX
     dialog = QFileDialog()
     dialog.setFileMode(QFileDialog.FileMode.ExistingFile)
-    dialog.setNameFilter("PowerPoint files (*.pptx);;All files (*.*)")
+    dialog.setNameFilter("Question Banks (*.pptx *.txt *.md *.docx);;All Files (*)")
     if not dialog.exec():
         return
     selected = dialog.selectedFiles()
     if not selected:
         return
-    pptx_file = selected[0]
-    # Build quiz
-    quiz_data, pptx_basename = build_quiz_from_pptx(pptx_file)
-    if not quiz_data:
-        QMessageBox.warning(None, "No Questions", "Could not find any questions in that PPTX.")
+    bank_file = selected[0]
+
+    # UNIVERSAL loader (handles .pptx/.txt/.md/.docx)
+    try:
+        quiz_data, bank_basename = build_quiz_from_path(bank_file)
+    except Exception as e:
+        QMessageBox.critical(None, "Load Failed", f"Could not load questions:\n{e}")
         return
-    # Start with settings
-    window = start_with_settings_dialog(None, quiz_data, pptx_path=pptx_basename)
+
+    if not quiz_data:
+        QMessageBox.warning(None, "No Questions", "No questions were found in the selected file.")
+        return
+
+    window = start_with_settings_dialog(None, quiz_data, pptx_path=bank_basename)
     if not window:
         return
     sys.exit(app.exec())
@@ -1859,7 +2097,6 @@ def run_quiz_app(quiz_data: List[Dict], pptx_path: Optional[str] = None, *, time
         window.timer.start(1000)
     window.show()
     sys.exit(app.exec())
-
 
 if __name__ == "__main__":
     check_for_update()

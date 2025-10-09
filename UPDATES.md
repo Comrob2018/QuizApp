@@ -1,4 +1,4 @@
-V 1.3.0
+V 2.0.0
 - Updated to accept multiple test bank types. .pptx, .docx, .txt, and .md now accepted.
 
 V 1.2.8

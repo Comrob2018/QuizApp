@@ -65,11 +65,11 @@ from typing import List, Dict, Set, Tuple, Optional, Callable
 import json
 from urllib.request import Request, urlopen
 
-VERSION = "1.2.7"
+VERSION = "1.3.0"
 
-#---------------------------------
-#  Checking for required libraries
-#---------------------------------
+#--------------------------------
+#  Version checking with Github
+#--------------------------------
 
 try:
     from importlib.metadata import version, PackageNotFoundError  # Python 3.8+
@@ -89,39 +89,6 @@ def _parse_version(v: str) -> tuple:
     while len(nums) < 3:
         nums.append(0)
     return tuple(nums)
-
-
-def _get_installed_version(dist_name: str) -> Optional[str]:
-    """Return installed distribution version (or None if not installed)."""
-    try:
-        return version(dist_name)
-    except PackageNotFoundError:
-        return None
-
-
-def _needs(dist_name: str, min_ver_str: str) -> bool:
-    """Return True if dist_name is missing or below min_ver_str."""
-    v = _get_installed_version(dist_name)
-    if v is None:
-        return True
-    return _parse_version(v) < _parse_version(min_ver_str)
-
-
-def _ask_yes_no(prompt: str, default_no: bool = True) -> bool:
-    """Return True if user answers yes. If not interactive, return False when default_no."""
-    if not sys.stdin or not sys.stdin.isatty():
-        return not default_no
-    try:
-        ans = input(prompt).strip().lower()
-    except EOFError:
-        return not default_no
-    return ans in ("y", "yes")
-
-
-def _pip_install(args: List[str]) -> None:
-    """Run pip install/upgrade with provided args (list of 'pkg>=x.y')."""
-    cmd = [sys.executable, "-m", "pip", "install", "--upgrade", *args]
-    subprocess.check_call(cmd)
 
 
 def _force_popup_update_warning(download_page_url: str, parent=None) -> None:
@@ -159,52 +126,62 @@ def _force_popup_update_warning(download_page_url: str, parent=None) -> None:
         QDesktopServices.openUrl(QUrl(download_page_url))
 
 
-def ensure_requirements() -> None:
-    """
-    Ensure required packages (PyQt6, python-pptx) are present at minimum versions.
-    Prompts once (if interactive). Installs/updates both in one pip call when needed.
-    Exits with a helpful message if requirements remain unsatisfied.
-    Then compare local version of program with github.
-    """
-    requirements = [
-        ("PyQt6",       "6.5.0"),   # adjust if you need a newer baseline
-        ("python-pptx", "0.6.21"),
-    ]
-    
-    to_install = [f"{name}>={minver}" for (name, minver) in requirements if _needs(name, minver)]
+def check_for_update() -> None:
+    # Config: your raw VERSION file and the page you want to open
+    GITHUB_VERSION_FILE_URL = "https://raw.githubusercontent.com/Comrob2018/QuizApp/main/VERSION"
+    GITHUB_DOWNLOAD_PAGE    = "https://github.com/Comrob2018/QuizApp/tree/main"
 
-    if not to_install:
-        # Optional: print once for verbose mode
-        pass
-        
-    else:
-        # One prompt for all missing/outdated packages
-        message_lines = [
-            "The following packages are missing or below the required version:",
-            *[f"  - {spec}" for spec in to_install],
-            "",
-        ]
-        print("\n".join(message_lines))
-
-        if _ask_yes_no("Install/upgrade them now? (y/n): ", default_no=True):
+    try:
+        def _fetch_remote_text(url: str, timeout: float = 4.0) -> str | None:
             try:
-                print("Installing/upgrading: " + ", ".join(to_install))
-                _pip_install(to_install)
-            except subprocess.CalledProcessError as e:
-                print(f"❌ Installation failed: {e}")
-                sys.exit(1)
-        else:
-            print("❌ Required packages not installed. You can install them with:")
-            print(f"   {sys.executable} -m pip install --upgrade " + " ".join(to_install))
-            sys.exit(1)
+                req = Request(url, headers={
+                    "Accept": "text/plain, */*;q=0.1",
+                    "User-Agent": "quiz-app-version-check"
+                })
+                with urlopen(req, timeout=timeout) as resp:
+                    return resp.read().decode("utf-8", errors="replace")
+            except Exception:
+                return None
 
-        # Re-verify after pip run
-        still_missing = [f"{n}>={v}" for (n, v) in requirements if _needs(n, v)]
-        if still_missing:
-            print("❌ Some requirements are still unsatisfied after installation:")
-            for spec in still_missing:
-                print("  -", spec)
-            sys.exit(1)
+        def _extract_remote_version(text: str) -> str | None:
+            if not text:
+                return None
+            first = text.strip().splitlines()[0].strip()
+            m = re.search(r"\b\d+(?:\.\d+){1,3}[A-Za-z0-9\-\.]*\b", first)
+            if m:
+                return m.group(0)
+            # JSON fallback
+            try:
+                obj = json.loads(text)
+                cand = obj.get("latest") or obj.get("version") or obj.get("tag_name")
+                if isinstance(cand, str):
+                    return cand[1:] if cand.lower().startswith("v") else cand
+            except Exception:
+                pass
+            return None
+
+        remote_text = _fetch_remote_text(GITHUB_VERSION_FILE_URL)
+        remote_ver  = _extract_remote_version(remote_text) if remote_text else None
+
+        # NOTE: _parse_version() existed before — if you removed it, you can do a simple tuple compare:
+        def _parse_version(v: str) -> tuple[int,int,int]:
+            parts = (v or "").split(".")[:3]
+            nums = []
+            for p in parts:
+                try:
+                    nums.append(int("".join(ch for ch in p if ch.isdigit())))
+                except ValueError:
+                    nums.append(0)
+            while len(nums) < 3:
+                nums.append(0)
+            return tuple(nums)
+
+        if remote_ver and _parse_version(VERSION) < _parse_version(remote_ver):
+            _force_popup_update_warning(GITHUB_DOWNLOAD_PAGE)
+
+    except Exception:
+        # Swallow any network/parse errors to avoid blocking startup.
+        pass
     
     # -----------------------------
     # GitHub VERSION file check
@@ -461,11 +438,6 @@ def build_quiz_from_pptx(pptx_path: str) -> Tuple[List[Dict], str]:
 # -----------------------------
 
 THEMES = {
-    "dark": {
-        "bg": "#1c1c1c", "surface": "#2a2a2a", "surface_alt": "#333333", "text": "#eaeaea",
-        "muted": "#777777", "border": "#2f2f2f", "primary": "#7AA2F7", "accent": "#BB9AF7",
-        "success": "#9ECE6A", "warn": "#E0AF68", "error": "#F7768E"
-    },
     "solarized_dark": {
         "bg": "#002b36", "surface": "#073642", "surface_alt": "#0a3a46", "text": "#eee8d5",
         "muted": "#93a1a1", "border": "#586e75", "primary": "#268bd2", "accent": "#6c71c4",
@@ -475,11 +447,6 @@ THEMES = {
         "bg": "#2E3440", "surface": "#3B4252", "surface_alt": "#434C5E", "text": "#ECEFF4",
         "muted": "#D8DEE9", "border": "#434C5E", "primary": "#88C0D0", "accent": "#5E81AC",
         "success": "#A3BE8C", "warn": "#EBCB8B", "error": "#BF616A"
-    },
-    "gruvbox_dark": {
-        "bg": "#282828", "surface": "#3C3836", "surface_alt": "#504945", "text": "#EBDBB2",
-        "muted": "#A89984", "border": "#A89984", "primary": "#83A598", "accent": "#D3869B",
-        "success": "#B8BB26", "warn": "#FABD2F", "error": "#FB4934"
     },
     "tokyo_night": {
         "bg": "#1A1B26", "surface": "#292E42", "surface_alt": "#2f3353", "text": "#C0CAF5",
@@ -496,20 +463,10 @@ THEMES = {
         "muted": "#CAAEDF", "border": "#4A2A6A", "primary": "#00F0FF", "accent": "#FF6BD6",
         "success": "#89FFBF", "warn": "#FFC857", "error": "#FF5C8A"
     },
-    "sapphire": {
-        "bg": "#162C45", "surface": "#353652", "surface_alt": "#4C334D", "text": "#F2F2F2",  
-        "muted": "#A9A4AF", "border": "#4C334D", "primary": "#053C5E", "accent": "#DB222A",  
-        "success": "#4CAF50", "warn": "#FF9800", "error": "#C32530",  
-    },
     "crimson_ember": {
         "bg": "#03071E", "surface": "#370617", "surface_alt": "#6A040F", "text": "#FFF6E5",  
         "muted": "#CBBDAA", "border": "#9D0208", "primary": "#FFBA08", "accent": "#D00000",  
         "success": "#4CAF50", "warn": "#F48C06", "error": "#D00000",  
-    },
-     "aurora_teal": {
-        "bg": "#0B1020", "surface": "#121A2B", "surface_alt": "#1A2338", "text": "#E8F6FF",
-        "muted": "#9FB3C8", "border": "#253352", "primary": "#2DD4BF", "accent": "#7C3AED",  
-        "success": "#22C55E", "warn": "#F59E0B", "error": "#EF4444",
     },
     "dark_rose": {
         "bg": "#450A1B", "surface": "#800F2F", "surface_alt": "#A4133C", "text": "#FFF0F3", 
@@ -521,22 +478,65 @@ THEMES = {
         "muted": "#89A989","border": "#1E2F1E","primary": "#00FF7A","accent": "#00F0FF",
         "success": "#00E676","warn": "#FFC857","error": "#FF4D6D",
     },
+    "forest_mist_dark": {
+        "bg": "#2E312C", "surface": "#555F40", "surface_alt": "#4F8877", "text": "#A4B793",
+        "muted": "#A1B290", "border": "#4F8877", "primary": "#4F8877", "accent": "#A1B290",
+        "success": "#4F8877", "warn": "#A4B793", "error": "#555F40"
+    },
+    "dathomir_dark": {
+        "bg": "#1B0E11", "surface": "#2E1A1E", "surface_alt": "#3E1F24", "text": "#E0D9D3",
+        "muted": "#7D3C42", "border": "#A06767", "primary": "#C13B3A", "accent": "#3FA66B",
+        "success": "#3FA66B", "warn": "#C77D3B", "error": "#C13B3A"
+    },
+    "tatooine_dark": {
+        "bg": "#3A2E20", "surface": "#5C4733", "surface_alt": "#8A6B45", "text": "#E3D9A4",
+        "muted": "#A67B4F", "border": "#C29B6C", "primary": "#E6B422", "accent": "#C75B39",
+        "success": "#8C9E3C", "warn": "#E6B422", "error": "#C75B39"
+    },
+    "kashyyyk_dark": {
+        "bg": "#2C3024", "surface": "#3C4630", "surface_alt": "#4F7C48", "text": "#C7D3AA",
+        "muted": "#6A7D4D", "border": "#8B9A6F", "primary": "#4F7C48", "accent": "#A17B47",
+        "success": "#6FAF64", "warn": "#CFAF5A", "error": "#8C3B2F"
+    },
+    "jedi": {
+        "bg": "#1E2933", "surface": "#2C3A4A", "surface_alt": "#3A6DAA", "text": "#E3E9F0",
+        "muted": "#7F90A6", "border": "#9BAABF", "primary": "#3A6DAA", "accent": "#E3C76F",
+        "success": "#3E9C72", "warn": "#E3C76F", "error": "#9C3E3E"
+    },
+    "sith": {
+        "bg": "#1A0E0E", "surface": "#2A1414", "surface_alt": "#3C1C1C", "text": "#F1E6E6",
+        "muted": "#8C5C5C", "border": "#B38A8A", "primary": "#A31C1C", "accent": "#5C1C1C",
+        "success": "#6E2F2F", "warn": "#E0A33D", "error": "#A31C1C"
+    },
+    "cloud_city": {
+        "bg": "#2C2E33", "surface": "#3E4652", "surface_alt": "#6F92C9", "text": "#E5EAF0",
+        "muted": "#A1AEC2", "border": "#B8C6D9", "primary": "#6F92C9", "accent": "#F0A458",
+        "success": "#5EA896", "warn": "#F0A458", "error": "#C75B4D"
+    },
+    "crimson_dawn_dark": {
+        "bg": "#141010", "surface": "#241818", "surface_alt": "#3C1C1C", "text": "#EAE6E6",
+        "muted": "#8C5C5C", "border": "#B38A8A", "primary": "#9C1C2B", "accent": "#D4AF37",
+        "success": "#4E9C5A", "warn": "#D4AF37", "error": "#9C1C2B"
+    }
 }
 
 # Human-friendly names -> keys (what shows in the dropdown)
 THEME_NAMES = {
-    "Dark": "dark",
-    "Solarized Dark": "solarized_dark",
-    "Nord": "nord",
-    "Gruvbox (Dark)": "gruvbox_dark",
+    "Solarized": "solarized_dark",
+    "Hoth": "nord",
     "Tokyo Night": "tokyo_night",
     "High Contrast": "high_contrast",
     "Cyberpunk": "cyberpunk",
-    "Sapphire": "sapphire",
-    "Crimson Ember": "crimson_ember",
-    "Aurora": "aurora_teal",
+    "Superman": "crimson_ember",
     "Dark Rose": "dark_rose",
-    "Hacker Terminal": "hacker_terminal",
+    "H@(k3r_term!n41": "hacker_terminal",
+    "Dathomir":"dathomir_dark",
+    "Tatooine":"tatooine_dark",
+    "Kashyyyk":"kashyyyk_dark",
+    "Cloud City": "cloud_city",
+    "Sith": "sith",
+    "Jedi": "jedi",
+    "Crimson Dawn":"crimson_dawn_dark",
 }
 
 # Convenience: inverse map if you ever need to go from key -> label
@@ -1328,13 +1328,13 @@ class QuizMainWindow(QMainWindow):
 
         if flash_code == "submit":
             button.setText("✓ Saved")
-            button.setStyleSheet("background-color: #9ACD32; color: black;")
+            button.setStyleSheet("background-color: #008450; color: black;")
         elif flash_code == "check_not_quite":
             button.setText("Not Quite!")
-            button.setStyleSheet("background-color: #FFBF00; color: black;")
+            button.setStyleSheet("background-color: #EFB700; color: black;")
         elif flash_code == "check_current":
             button.setText("Correct!")
-            button.setStyleSheet("background-color: #9ACD32; color: black;")
+            button.setStyleSheet("background-color: #008450; color: black;")
 
         # start a fresh timer to revert
         timer = QTimer(self)
@@ -1468,7 +1468,7 @@ class QuizMainWindow(QMainWindow):
             self.flags.remove(idx)
             self.flag_button.setStyleSheet(
                 "QPushButton {"
-                " background-color: #b00020; color: white;"
+                " background-color: #B81D13; color: white;"
                 " padding: 6px 12px; border-radius: 6px;"
                 " font-weight: 600;"
                 "}"
@@ -1579,7 +1579,7 @@ class QuizMainWindow(QMainWindow):
         # Keep flag button style in sync with current question
         if self.current_index in self.flags:
             self.flag_button.setStyleSheet(
-                "QPushButton { background-color: #b00020; color: white; padding: 6px 12px; border-radius: 6px; font-weight: 600; }"
+                "QPushButton { background-color: #B81D13; color: white; padding: 6px 12px; border-radius: 6px; font-weight: 600; }"
                 "QPushButton:hover { background-color: #d32f2f; }"
             )
         else:
@@ -1862,5 +1862,5 @@ def run_quiz_app(quiz_data: List[Dict], pptx_path: Optional[str] = None, *, time
 
 
 if __name__ == "__main__":
-    ensure_requirements()
+    check_for_update()
     main_open_pptx_and_run()

@@ -1,4 +1,4 @@
-V 1.3.0
+V 1.2.8
 - Updated to using requirements.txt instead of inside the script. Use pip install -r requirements.txt to install requirements
 
 V 1.2.7

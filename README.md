@@ -1,4 +1,4 @@
-# QuizApp v1.3.0
+# QuizApp v2.0.0
 
 A fast, keyboard-friendly quiz runner that builds questions from a question bank(now supports: .txt, .md, .docx, and .pptx), supports images, multi-select answers, timers & breaks. Includes a **theme dropdown** (Solarized, Nord, Dracula, etc.) and a **High Contrast** theme for accessibility.
 

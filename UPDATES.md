@@ -1,3 +1,6 @@
+V 1.3.0
+- Updated to accept multiple test bank types. .pptx, .docx, .txt, and .md now accepted.
+
 V 1.2.8
 - Updated to using requirements.txt instead of inside the script. Use pip install -r requirements.txt to install requirements
 

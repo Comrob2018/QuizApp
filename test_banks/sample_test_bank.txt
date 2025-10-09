@@ -1,0 +1,31 @@
+Q: What does the acronym "IDS" stand for?
+- Intrusion Detection System
+- Internal Data Service
+- Internet Delivery Software
+- Integrated Defense Strategy
+Answer: Intrusion Detection System
+Reason: IDS tools monitor network traffic for suspicious activities.
+
+Q: Which of the following protocols uses port 22 by default?
+- FTP
+- SSH
+- SMTP
+- HTTP
+Answer: SSH
+Reason: SSH uses port 22 for secure remote connections.
+
+Q: Which of the following is a hashing algorithm?
+- AES
+- SHA-256
+- RSA
+- Blowfish
+Answer: SHA-256
+Reason: SHA-256 is a cryptographic hash function, not an encryption method.
+
+Q: Which option describes a phishing attack?
+- Sending fake login pages to capture credentials
+- Encrypting data for ransom
+- Exploiting software vulnerabilities
+- Overloading a server with requests
+Answer: Sending fake login pages to capture credentials
+Reason: Phishing tricks users into providing sensitive information.

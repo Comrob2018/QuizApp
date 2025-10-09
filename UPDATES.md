@@ -1,5 +1,5 @@
 V 1.3.0
-- Updated to using requirements.txt instead of inside the script. 
+- Updated to using requirements.txt instead of inside the script. Use pip install -r requirements.txt to install requirements
 
 V 1.2.7
 - Updated button visiblity when not in use. (Break, Timer, Caluculator, Show Image) Buttons still function, they are just hidden when not in use.

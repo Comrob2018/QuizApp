@@ -9,7 +9,8 @@ Minor Updates
 2. Add ability to add questions in settings or during test set up, non test bank.
 3. Add testing modes for different certification bodies. (i.e. CompTIA, GIAC, AWS, PearsonVUE...)
 4. Add multiple test banks at once
-5. Multiple image handling for a slide. 
+5. Multiple image handling for a slide.
+6. Add Scenario based testing support
 
 
 Planned Patches
